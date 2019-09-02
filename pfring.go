@@ -1,16 +1,17 @@
 package gourmet
 
 import (
+    "github.com/google/gopacket"
+    "github.com/google/gopacket/layers"
     "github.com/google/gopacket/pfring"
 )
 
-type PfringSensor struct {
-    options *SensorOptions
-    ring    *pfring.Ring
-}
-
-func NewPfringSensor(opt *SensorOptions) (s *PfringSensor, err error) {
-    ring, err := createPfring(opt.InterfaceName, opt.SnapLength, opt.IsPromiscuous)
+func newPfringSensor(opt *SensorOptions) (src *gopacket.PacketSource, err error) {
+    err = initOptions(opt)
+    if err != nil {
+        return nil, err
+    }
+    ring, err := createPfring(opt)
     if err != nil {
         return nil, err
     }
@@ -24,17 +25,14 @@ func NewPfringSensor(opt *SensorOptions) (s *PfringSensor, err error) {
     if err != nil {
         return nil, err
     }
-    return &PfringSensor{
-        opt,
-        ring,
-    }, nil
+    return gopacket.NewPacketSource(ring, layers.LayerTypeEthernet), nil
 }
 
-func createPfring(src string, snaplen uint32, promisc bool) (ring *pfring.Ring, err error) {
-    if promisc {
-        ring, err = pfring.NewRing(src, snaplen, pfring.FlagPromisc)
+func createPfring(opt *SensorOptions) (ring *pfring.Ring, err error) {
+    if opt.IsPromiscuous {
+        ring, err = pfring.NewRing(opt.InterfaceName, opt.SnapLen, pfring.FlagPromisc)
     } else {
-        ring, err = pfring.NewRing(src, snaplen, 0)
+        ring, err = pfring.NewRing(opt.InterfaceName, opt.SnapLen, 0)
     }
     return ring, err
 }
