@@ -50,11 +50,11 @@ type tcpStreamFactory struct {
 // in order to easily consume TCP payloads.
 type TcpStream struct {
     Net, Transport 	gopacket.Flow
+    Time            time.Time
+    ProtocolType    Protocol
     payload         []byte
     byteChannel     chan []byte
-    Time            time.Time
     tcpstate        *reassembly.TCPSimpleFSM
-    ProtocolType    Protocol
 }
 
 func (ts *TcpStream) Read(p []byte) (int, error) {
