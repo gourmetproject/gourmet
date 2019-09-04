@@ -2,6 +2,7 @@ package gourmet
 
 import (
     "github.com/google/gopacket"
+    "github.com/google/gopacket/layers"
     "github.com/google/gopacket/pcap"
     "time"
 )
@@ -29,5 +30,5 @@ func newLibpcapSensor(opt *SensorOptions) (src *gopacket.PacketSource, err error
     if err != nil {
         return nil, err
     }
-    return gopacket.NewPacketSource(handle, handle.LinkType()), nil
+    return gopacket.NewPacketSource(handle, layers.LayerTypeEthernet), nil
 }

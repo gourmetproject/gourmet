@@ -3,9 +3,6 @@ package gourmet
 import (
     "errors"
     "github.com/google/gopacket"
-    "github.com/google/gopacket/layers"
-    "github.com/google/gopacket/reassembly"
-    "time"
 )
 
 type InterfaceType byte
@@ -27,8 +24,8 @@ type SensorOptions struct {
 
 type Sensor struct {
     packetSource *gopacket.PacketSource
-    assembler *reassembly.Assembler
-    streams chan *TcpStream
+    sourceInUse bool
+    streamFactory *tcpStreamFactory
 }
 
 func NewSensor(options *SensorOptions) (s *Sensor, err error) {
@@ -51,50 +48,39 @@ func NewSensor(options *SensorOptions) (s *Sensor, err error) {
     } else {
         return nil, errors.New("interface type is not set")
     }
-    return &Sensor {
-        packetSource: src,
-    }, nil
-}
-
-func (s *Sensor) GetPackets() chan gopacket.Packet {
-    return s.packetSource.Packets()
-}
-
-// private implementation of reassembly.AssemblerContext interface
-type assemblerContext struct { CaptureInfo gopacket.CaptureInfo }
-func (ac *assemblerContext) GetCaptureInfo() gopacket.CaptureInfo { return ac.CaptureInfo }
-
-// Make sure to call CloseTcpStreams when you no longer need to consume reassembled tcp streams
-func (s *Sensor) GetTcpStreams() chan *TcpStream {
-    s.streams = make(chan *TcpStream)
-    factory := &tcpStreamFactory {
-        sensor: s,
+    sf := &tcpStreamFactory {
+        streams:     make(chan *TcpStream),
     }
-    s.assembler = createAssembler(factory)
-    ticker := time.Tick(time.Minute)
-    go func() {
-        for {
-            select {
-            case packet := <- s.GetPackets():
-                var tcp *layers.TCP
-                if packet.NetworkLayer() == nil || packet.TransportLayer() == nil ||
-                    packet.TransportLayer().LayerType() != layers.LayerTypeTCP {
-                    continue
-                }
-                tcp = packet.TransportLayer().(*layers.TCP)
-                context := &assemblerContext {
-                    CaptureInfo: packet.Metadata().CaptureInfo,
-                }
-                s.assembler.AssembleWithContext(packet.NetworkLayer().NetworkFlow(), tcp, context)
-            case <- ticker:
-                s.assembler.FlushCloseOlderThan(time.Now().Add(time.Minute * -2))
-            }
-        }
-    }()
-    return s.streams
+    s = &Sensor {
+        packetSource:  src,
+        streamFactory: sf,
+    }
+    return s, nil
 }
 
-func (s *Sensor) CloseTcpStreams() {
-    s.assembler.FlushAll()
-    close(s.streams)
+func (s *Sensor) NewPacketsChannel() (chan gopacket.Packet, error) {
+    if s.sourceInUse {
+        return nil, errors.New("sensor already in use")
+    }
+    s.sourceInUse = true
+    return s.packetSource.Packets(), nil
+}
+
+func (s *Sensor) ClosePacketsChannel() {
+    close(s.packetSource.Packets())
+    s.sourceInUse = false
+}
+
+func (s *Sensor) NewTcpStreamsChannel() (chan *TcpStream, error) {
+    if s.sourceInUse {
+        return nil, errors.New("sensor already in use")
+    }
+    go s.streamFactory.getTcpStreams(s.packetSource.Packets())
+    return s.streamFactory.streams, nil
+}
+
+func (s *Sensor) CloseTcpStreamsChannel() {
+    close(s.packetSource.Packets())
+    close(s.streamFactory.streams)
+    s.sourceInUse = false
 }
