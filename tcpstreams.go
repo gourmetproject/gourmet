@@ -9,16 +9,16 @@ import (
     "time"
 )
 
-type protocol string
-type TCPProtocolMap map[uint16]protocol
-type UDPProtocolMap map[uint16]protocol
+type Protocol string
+type TCPProtocolMap map[uint16]Protocol
+type UDPProtocolMap map[uint16]Protocol
 const (
     // TCP Protocols
-    TlsProtocol    protocol    = "tls"
-    HttpProtocol   protocol    = "http"
-    DnsTcpProtocol protocol    = "dns"
+    TlsProtocol    Protocol    = "tls"
+    HttpProtocol   Protocol    = "http"
+    DnsTcpProtocol Protocol    = "dns"
     // UDP Protocols
-    DnsUdpProtocol protocol    = "dns"
+    DnsUdpProtocol Protocol    = "dns"
 )
 var (
     TcpProtocols = TCPProtocolMap {
@@ -31,12 +31,27 @@ var (
     }
 )
 
-// TcpStream is an implementation of reassembly.Stream. It is also an implementation of an io.Reader
-// in order to easily consume TCP payloads.
 type TcpStream struct {
-    Net, Transport 	gopacket.Flow
-    ProtocolType    protocol
-    Payload         *bytes.Buffer
+    stream *tcpStream
+}
+
+func (t *TcpStream) Payload() []byte {
+    return t.stream.payload.Bytes()
+}
+
+func (t *TcpStream) NetworkFlow() gopacket.Flow {
+    return t.stream.net
+}
+
+func (t *TcpStream) TransportFlow() gopacket.Flow {
+    return t.stream.transport
+}
+
+// tcpStream is an implementation of reassembly.Stream
+type tcpStream struct {
+    net, transport 	gopacket.Flow
+    protocolType    Protocol
+    payload         *bytes.Buffer
     done            chan bool
     packets         int
     payloadPackets  int
@@ -48,26 +63,22 @@ type TcpStream struct {
 // TcpStreamFactory.New, and updated each time we call this function. This ensures that each packet
 // reassembled contains the proper TCP flags (SYN, ACK, etc.), depending on where it is sequentially
 // in the transmission.
-func (ts *TcpStream) Accept(tcp *layers.TCP, ci gopacket.CaptureInfo, dir reassembly.TCPFlowDirection, nextSeq reassembly.Sequence, start *bool, ac reassembly.AssemblerContext) bool {
-    return true
+func (ts *tcpStream) Accept(tcp *layers.TCP, ci gopacket.CaptureInfo, dir reassembly.TCPFlowDirection, nextSeq reassembly.Sequence, start *bool, ac reassembly.AssemblerContext) bool {
+    return ts.tcpstate.CheckState(tcp, dir)
 }
 
 // ReassembledSG implements the reassembly.Stream interface.
-func (ts *TcpStream) ReassembledSG(sg reassembly.ScatterGather, ac reassembly.AssemblerContext) {
+func (ts *tcpStream) ReassembledSG(sg reassembly.ScatterGather, ac reassembly.AssemblerContext) {
     length, _ := sg.Lengths()
     data := sg.Fetch(length)
     if length > 0 {
-        ts.Payload.Write(data)
-        ts.payloadPackets++
+        ts.payload.Write(data)
     }
     ts.packets++
 }
 
 // ReassemblyComplete implements the reassembly.Stream interface.
-func (ts *TcpStream) ReassemblyComplete(ac reassembly.AssemblerContext) bool {
-    if ts.packets == 0 {
-        fmt.Println(ts.Transport.String())
-    }
+func (ts *tcpStream) ReassemblyComplete(ac reassembly.AssemblerContext) bool {
     ts.done <- true
     return true
 }
@@ -82,22 +93,25 @@ type tcpStreamFactory struct {
 
 func (tsf *tcpStreamFactory) New(n, t gopacket.Flow, tcp *layers.TCP, ac reassembly.AssemblerContext) reassembly.Stream {
     protocol := getProtocol(t)
-    stream := &TcpStream {
-        Net:          n,
-        Transport:    t,
-        Payload:      new(bytes.Buffer),
+    s := &tcpStream {
+        net:          n,
+        transport:    t,
+        payload:      new(bytes.Buffer),
         done:         make(chan bool),
         tcpstate:     reassembly.NewTCPSimpleFSM(reassembly.TCPSimpleFSMOptions{}),
-        ProtocolType: TcpProtocols[protocol],
+        protocolType: TcpProtocols[protocol],
     }
     go func() {
-        <- stream.done
+        <- s.done
         // ignore empty streams flushed/closed early b/c of assembler timeout
-        if stream.packets > 0 {
+        if s.packets > 0 {
+            stream := &TcpStream{
+                stream: s,
+            }
             tsf.streams <- stream
         }
     }()
-    return stream
+    return s
 }
 
 func (tsf *tcpStreamFactory) getTcpStreams(packets chan gopacket.Packet) {
