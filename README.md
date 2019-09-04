@@ -21,7 +21,3 @@ utilizes Google's gopacket library to quickly decode and analyze large amounts o
 
 - BPF support for AF_PACKET
 - Binary release w/ command-line configuration
-
-
-#### Support the Project
-https://www.patreon.com/bePatron?u=24027207" data-patreon-widget-type="become-patron-button">Become a Patron!</a><script async src="https://c6.patreon.com/becomePatronButton.bundle.js"></script>
