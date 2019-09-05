@@ -1,7 +1,10 @@
 package gourmet
 
 import (
+    "errors"
     "github.com/google/gopacket"
+    "github.com/google/gopacket/pcap"
+    "log"
     "strconv"
 )
 
@@ -12,4 +15,17 @@ func getProtocol(transport gopacket.Flow) uint16 {
         return uint16(a)
     }
     return uint16(b)
+}
+
+func checkIfInterfaceExists(iface string) error {
+    devices, err := pcap.FindAllDevs()
+    if err != nil {
+        log.Fatal(err)
+    }
+    for _, device := range devices {
+        if device.Name == iface {
+            return nil
+        }
+    }
+    return errors.New("specified network interface does not exist")
 }
