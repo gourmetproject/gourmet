@@ -9,8 +9,8 @@ import (
 )
 
 type protocol string
-type TCPProtocolMap map[uint16]protocol
-type UDPProtocolMap map[uint16]protocol
+type tcpProtocolMap map[uint16]protocol
+type udpProtocolMap map[uint16]protocol
 const (
     // TCP Protocols
     TlsProtocol    protocol = "tls"
@@ -20,12 +20,12 @@ const (
     DnsUdpProtocol protocol = "dns"
 )
 var (
-    tcpProtocols = TCPProtocolMap {
+    tcpProtocols = tcpProtocolMap {
         53:  DnsTcpProtocol,
         80:  HttpProtocol,
         443: TlsProtocol,
     }
-    udpProtocols = UDPProtocolMap {
+    udpProtocols = udpProtocolMap {
         53: DnsUdpProtocol,
     }
 )
