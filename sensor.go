@@ -8,17 +8,17 @@ import (
     "time"
 )
 
-type InterfaceType byte
+type interfaceType byte
 
 const (
-    AfpacketType InterfaceType = 1
-    PfringType   InterfaceType = 2
-    LibpcapType  InterfaceType = 3
+    AfpacketType interfaceType = 1
+    PfringType   interfaceType = 2
+    LibpcapType  interfaceType = 3
 )
 
 type SensorOptions struct {
     InterfaceName string
-    InterfaceType
+    InterfaceType interfaceType
     IsPromiscuous bool
     SnapLen       uint32
     Filter        string
@@ -42,7 +42,7 @@ func initOptions(opt *SensorOptions) error {
 type Sensor struct {
     source        gopacket.PacketDataSource
     packets       chan gopacket.Packet
-    intType       InterfaceType
+    intType       interfaceType
     streamFactory *tcpStreamFactory
 }
 
