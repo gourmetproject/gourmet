@@ -8,24 +8,24 @@ import (
     "time"
 )
 
-type Protocol string
-type TCPProtocolMap map[uint16]Protocol
-type UDPProtocolMap map[uint16]Protocol
+type protocol string
+type TCPProtocolMap map[uint16]protocol
+type UDPProtocolMap map[uint16]protocol
 const (
     // TCP Protocols
-    TlsProtocol    Protocol    = "tls"
-    HttpProtocol   Protocol    = "http"
-    DnsTcpProtocol Protocol    = "dns"
+    TlsProtocol    protocol = "tls"
+    HttpProtocol   protocol = "http"
+    DnsTcpProtocol protocol = "dns"
     // UDP Protocols
-    DnsUdpProtocol Protocol    = "dns"
+    DnsUdpProtocol protocol = "dns"
 )
 var (
-    TcpProtocols = TCPProtocolMap {
+    tcpProtocols = TCPProtocolMap {
         53:  DnsTcpProtocol,
         80:  HttpProtocol,
         443: TlsProtocol,
     }
-    UdpProtocols = UDPProtocolMap {
+    udpProtocols = UDPProtocolMap {
         53: DnsUdpProtocol,
     }
 )
@@ -85,14 +85,14 @@ type tcpStreamFactory struct {
 }
 
 func (tsf *tcpStreamFactory) New(n, t gopacket.Flow, tcp *layers.TCP, ac reassembly.AssemblerContext) reassembly.Stream {
-    protocol := getProtocol(t)
+    protocol := getTcpProtocol(t)
     s := &tcpStream {
         net:          n,
         transport:    t,
         payload:      new(bytes.Buffer),
         done:         make(chan bool),
         tcpstate:     reassembly.NewTCPSimpleFSM(reassembly.TCPSimpleFSMOptions{}),
-        protocolType: TcpProtocols[protocol],
+        protocolType: protocol,
     }
     go func() {
         // wait for reassembly to be done

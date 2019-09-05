@@ -8,13 +8,13 @@ import (
     "strconv"
 )
 
-func getProtocol(transport gopacket.Flow) uint16 {
+func getTcpProtocol(transport gopacket.Flow) Protocol {
     a, _ := strconv.ParseUint(transport.Src().String(), 10, 16)
     b, _ := strconv.ParseUint(transport.Dst().String(), 10, 16)
     if a < b {
-        return uint16(a)
+        return tcpProtocols[uint16(a)]
     }
-    return uint16(b)
+    return tcpProtocols[uint16(b)]
 }
 
 func checkIfInterfaceExists(iface string) error {
