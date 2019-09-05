@@ -2,7 +2,6 @@ package gourmet
 
 import (
     "bytes"
-    "fmt"
     "github.com/google/gopacket"
     "github.com/google/gopacket/layers"
     "github.com/google/gopacket/reassembly"
@@ -58,16 +57,10 @@ type tcpStream struct {
     tcpstate        *reassembly.TCPSimpleFSM
 }
 
-// Accept validates that the TCP stream is valid via reassembly.TCPSimpleFSM.CheckState before it
-// passes it along to the assembler. A TCPSimpleFSM is assigned to each TCPStream upon creation by
-// TcpStreamFactory.New, and updated each time we call this function. This ensures that each packet
-// reassembled contains the proper TCP flags (SYN, ACK, etc.), depending on where it is sequentially
-// in the transmission.
 func (ts *tcpStream) Accept(tcp *layers.TCP, ci gopacket.CaptureInfo, dir reassembly.TCPFlowDirection, nextSeq reassembly.Sequence, start *bool, ac reassembly.AssemblerContext) bool {
-    return ts.tcpstate.CheckState(tcp, dir)
+    return true
 }
 
-// ReassembledSG implements the reassembly.Stream interface.
 func (ts *tcpStream) ReassembledSG(sg reassembly.ScatterGather, ac reassembly.AssemblerContext) {
     length, _ := sg.Lengths()
     data := sg.Fetch(length)
@@ -77,7 +70,6 @@ func (ts *tcpStream) ReassembledSG(sg reassembly.ScatterGather, ac reassembly.As
     ts.packets++
 }
 
-// ReassemblyComplete implements the reassembly.Stream interface.
 func (ts *tcpStream) ReassemblyComplete(ac reassembly.AssemblerContext) bool {
     ts.done <- true
     return true
@@ -88,7 +80,8 @@ func (ts *tcpStream) ReassemblyComplete(ac reassembly.AssemblerContext) bool {
 // easily consume packets, streams, and stream pairs.
 type tcpStreamFactory struct {
     assembler *reassembly.Assembler
-    streams chan *TcpStream
+    streams   chan *TcpStream
+    ticker    *time.Ticker
 }
 
 func (tsf *tcpStreamFactory) New(n, t gopacket.Flow, tcp *layers.TCP, ac reassembly.AssemblerContext) reassembly.Stream {
@@ -102,8 +95,9 @@ func (tsf *tcpStreamFactory) New(n, t gopacket.Flow, tcp *layers.TCP, ac reassem
         protocolType: TcpProtocols[protocol],
     }
     go func() {
+        // wait for reassembly to be done
         <- s.done
-        // ignore empty streams flushed/closed early b/c of assembler timeout
+        // ignore empty streams
         if s.packets > 0 {
             stream := &TcpStream{
                 stream: s,
@@ -114,23 +108,12 @@ func (tsf *tcpStreamFactory) New(n, t gopacket.Flow, tcp *layers.TCP, ac reassem
     return s
 }
 
-func (tsf *tcpStreamFactory) getTcpStreams(packets chan gopacket.Packet) {
-    tsf.createAssembler()
-    ticker := time.Tick(time.Minute)
-    for {
-        select {
-        case packet := <- packets:
-            var tcp *layers.TCP
-            if packet.TransportLayer() == nil || packet.TransportLayer().LayerType() != layers.LayerTypeTCP {
-                continue
-            }
-            tcp = packet.TransportLayer().(*layers.TCP)
-            tsf.assembler.Assemble(packet.NetworkLayer().NetworkFlow(), tcp)
-        case <- ticker:
-            fmt.Println(tsf.assembler.Dump())
-            flushed, closed := tsf.assembler.FlushCloseOlderThan(time.Now().Add(time.Minute * -4))
-            fmt.Println(flushed, closed)
-        }
+func (tsf *tcpStreamFactory) assemblePacket(netFlow gopacket.Flow, tcp *layers.TCP) {
+    tsf.assembler.Assemble(netFlow, tcp)
+    select {
+    case <- tsf.ticker.C:
+        tsf.assembler.FlushCloseOlderThan(time.Now().Add(time.Second * -40))
+    default:
     }
 }
 

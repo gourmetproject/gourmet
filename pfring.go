@@ -1,17 +1,15 @@
 package gourmet
 
 import (
-    "github.com/google/gopacket"
-    "github.com/google/gopacket/layers"
     "github.com/google/gopacket/pfring"
 )
 
-func newPfringSensor(opt *SensorOptions) (src *gopacket.PacketSource, err error) {
+func newPfringSensor(opt *SensorOptions) (ring *pfring.Ring, err error) {
     err = initOptions(opt)
     if err != nil {
         return nil, err
     }
-    ring, err := createPfring(opt)
+    ring, err = createPfring(opt)
     if err != nil {
         return nil, err
     }
@@ -25,7 +23,7 @@ func newPfringSensor(opt *SensorOptions) (src *gopacket.PacketSource, err error)
     if err != nil {
         return nil, err
     }
-    return gopacket.NewPacketSource(ring, layers.LayerTypeEthernet), nil
+    return ring, nil
 }
 
 func createPfring(opt *SensorOptions) (ring *pfring.Ring, err error) {

@@ -3,14 +3,17 @@ package gourmet
 import (
     "errors"
     "github.com/google/gopacket"
+    "github.com/google/gopacket/layers"
+    "log"
+    "time"
 )
 
 type InterfaceType byte
 
 const (
-    AfpacketType InterfaceType = 0
-    PfringType   InterfaceType = 1
-    LibpcapType  InterfaceType = 2
+    AfpacketType InterfaceType = 1
+    PfringType   InterfaceType = 2
+    LibpcapType  InterfaceType = 3
 )
 
 type SensorOptions struct {
@@ -23,64 +26,70 @@ type SensorOptions struct {
 }
 
 type Sensor struct {
-    packetSource *gopacket.PacketSource
-    sourceInUse bool
+    source        gopacket.PacketDataSource
+    packets       chan gopacket.Packet
+    intType       InterfaceType
     streamFactory *tcpStreamFactory
 }
 
 func NewSensor(options *SensorOptions) (s *Sensor, err error) {
-    var src *gopacket.PacketSource
-    if options.InterfaceType == PfringType {
-        src, err = newPfringSensor(options)
-        if err != nil {
-            return nil, err
-        }
-    } else if options.InterfaceType == AfpacketType {
-        src, err = newAfpacketSensor(options)
-        if err != nil {
-            return nil, err
-        }
-    } else if options.InterfaceType == LibpcapType {
-        src, err = newLibpcapSensor(options)
-        if err != nil {
-            return nil, err
-        }
-    } else {
-        return nil, errors.New("interface type is not set")
-    }
     sf := &tcpStreamFactory {
         streams:     make(chan *TcpStream),
     }
     s = &Sensor {
-        packetSource:  src,
         streamFactory: sf,
     }
+    if options.InterfaceType == PfringType {
+        s.source, err = newPfringSensor(options)
+        if err != nil {
+            return nil, err
+        }
+        s.intType = PfringType
+    } else if options.InterfaceType == AfpacketType {
+        s.source, err = newAfpacketSensor(options)
+        if err != nil {
+            return nil, err
+        }
+        s.intType = AfpacketType
+    } else if options.InterfaceType == LibpcapType {
+        s.source, err = newLibpcapSensor(options)
+        if err != nil {
+            return nil, err
+        }
+        s.intType = LibpcapType
+    } else {
+        return nil, errors.New("interface type is not set")
+    }
+    s.packets = make(chan gopacket.Packet)
+    s.streamFactory.streams = make(chan *TcpStream)
+    s.streamFactory.createAssembler()
+    go s.processPackets()
     return s, nil
 }
 
-func (s *Sensor) NewPacketsChannel() (chan gopacket.Packet, error) {
-    if s.sourceInUse {
-        return nil, errors.New("sensor already in use")
+func (s *Sensor) processPackets() {
+    s.streamFactory.ticker = time.NewTicker(time.Second * 10)
+    for {
+        p, _, err := s.source.ReadPacketData()
+        if err != nil {
+            log.Println(err)
+            continue
+        }
+        packet := gopacket.NewPacket(p, layers.LayerTypeEthernet, gopacket.Default)
+        s.processPacket(packet)
     }
-    s.sourceInUse = true
-    return s.packetSource.Packets(), nil
 }
 
-func (s *Sensor) ClosePacketsChannel() {
-    close(s.packetSource.Packets())
-    s.sourceInUse = false
-}
-
-func (s *Sensor) NewTcpStreamsChannel() (chan *TcpStream, error) {
-    if s.sourceInUse {
-        return nil, errors.New("sensor already in use")
+func (s *Sensor) processPacket(packet gopacket.Packet) {
+    if packet.TransportLayer() != nil && packet.TransportLayer().LayerType() == layers.LayerTypeTCP {
+        s.streamFactory.assemblePacket(packet.NetworkLayer().NetworkFlow(), packet.TransportLayer().(*layers.TCP))
     }
-    go s.streamFactory.getTcpStreams(s.packetSource.Packets())
-    return s.streamFactory.streams, nil
 }
 
-func (s *Sensor) CloseTcpStreamsChannel() {
-    close(s.packetSource.Packets())
-    close(s.streamFactory.streams)
-    s.sourceInUse = false
+func (s *Sensor) Packets() (packets chan gopacket.Packet) {
+    return s.packets
+}
+
+func (s *Sensor) Streams() (streams chan *TcpStream) {
+    return s.streamFactory.streams
 }

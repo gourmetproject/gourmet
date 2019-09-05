@@ -1,14 +1,12 @@
 package gourmet
 
 import (
-    "github.com/google/gopacket"
     "github.com/google/gopacket/afpacket"
-    "github.com/google/gopacket/layers"
     "log"
 )
 
-func newAfpacketSensor(opt *SensorOptions) (src *gopacket.PacketSource, err error) {
-    err = initOptions(opt)
+func newAfpacketSensor(opt *SensorOptions) (*afpacket.TPacket, error) {
+    err := initOptions(opt)
     if err != nil {
         return nil, err
     }
@@ -21,5 +19,5 @@ func newAfpacketSensor(opt *SensorOptions) (src *gopacket.PacketSource, err erro
     if err != nil {
         return nil, err
     }
-    return gopacket.NewPacketSource(tPacket, layers.LayerTypeEthernet), nil
+    return tPacket, nil
 }
