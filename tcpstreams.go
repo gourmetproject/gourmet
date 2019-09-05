@@ -2,9 +2,11 @@ package gourmet
 
 import (
     "bytes"
+    "fmt"
     "github.com/google/gopacket"
     "github.com/google/gopacket/layers"
     "github.com/google/gopacket/reassembly"
+    "sync"
     "time"
 )
 
@@ -49,7 +51,7 @@ func (t *TcpStream) TransportFlow() gopacket.Flow {
 // tcpStream is an implementation of reassembly.Stream
 type tcpStream struct {
     net, transport 	gopacket.Flow
-    protocolType    Protocol
+    protocolType    protocol
     payload         *bytes.Buffer
     done            chan bool
     packets         int
@@ -79,9 +81,10 @@ func (ts *tcpStream) ReassemblyComplete(ac reassembly.AssemblerContext) bool {
 // the reassembly.StreamFactory interface. Each Sensor contains a tcpStreamFactory in order to
 // easily consume packets, streams, and stream pairs.
 type tcpStreamFactory struct {
-    assembler *reassembly.Assembler
-    streams   chan *TcpStream
-    ticker    *time.Ticker
+    assembler      *reassembly.Assembler
+    assemblerMutex sync.Mutex
+    streams        chan *TcpStream
+    ticker         *time.Ticker
 }
 
 func (tsf *tcpStreamFactory) New(n, t gopacket.Flow, tcp *layers.TCP, ac reassembly.AssemblerContext) reassembly.Stream {
@@ -108,16 +111,24 @@ func (tsf *tcpStreamFactory) New(n, t gopacket.Flow, tcp *layers.TCP, ac reassem
     return s
 }
 
-func (tsf *tcpStreamFactory) assemblePacket(netFlow gopacket.Flow, tcp *layers.TCP) {
-    tsf.assembler.Assemble(netFlow, tcp)
+func (tsf *tcpStreamFactory) newPacket(netFlow gopacket.Flow, tcp *layers.TCP) {
     select {
     case <- tsf.ticker.C:
+        fmt.Println("flushing")
         tsf.assembler.FlushCloseOlderThan(time.Now().Add(time.Second * -40))
     default:
+        // pass through
     }
+    go tsf.assemblePacket(netFlow, tcp)
 }
 
-func (tsf *tcpStreamFactory) createAssembler() {
+func (tsf *tcpStreamFactory) assemblePacket(netFlow gopacket.Flow, tcp *layers.TCP) {
+    tsf.assemblerMutex.Lock()
+    tsf.assembler.Assemble(netFlow, tcp)
+    tsf.assemblerMutex.Unlock()
+}
+
+func (tsf *tcpStreamFactory) createAssemblers(numAssemblers int) {
     streamPool := reassembly.NewStreamPool(tsf)
     tsf.assembler = reassembly.NewAssembler(streamPool)
 }

@@ -5,6 +5,7 @@ import (
     "github.com/google/gopacket"
     "github.com/google/gopacket/layers"
     "log"
+    "runtime"
     "time"
 )
 
@@ -76,7 +77,7 @@ func NewSensor(options *SensorOptions) (s *Sensor, err error) {
     }
     s.packets = make(chan gopacket.Packet)
     s.streamFactory.streams = make(chan *TcpStream)
-    s.streamFactory.createAssembler()
+    s.streamFactory.createAssemblers(runtime.NumCPU())
     go s.processPackets()
     return s, nil
 }
@@ -96,7 +97,7 @@ func (s *Sensor) processPackets() {
 
 func (s *Sensor) processPacket(packet gopacket.Packet) {
     if packet.TransportLayer() != nil && packet.TransportLayer().LayerType() == layers.LayerTypeTCP {
-        s.streamFactory.assemblePacket(packet.NetworkLayer().NetworkFlow(), packet.TransportLayer().(*layers.TCP))
+        go s.streamFactory.newPacket(packet.NetworkLayer().NetworkFlow(), packet.TransportLayer().(*layers.TCP))
     }
 }
 

@@ -8,7 +8,7 @@ import (
     "strconv"
 )
 
-func getTcpProtocol(transport gopacket.Flow) Protocol {
+func getTcpProtocol(transport gopacket.Flow) protocol {
     a, _ := strconv.ParseUint(transport.Src().String(), 10, 16)
     b, _ := strconv.ParseUint(transport.Dst().String(), 10, 16)
     if a < b {
