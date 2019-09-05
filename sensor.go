@@ -2,7 +2,6 @@ package gourmet
 
 import (
     "errors"
-    "fmt"
     "github.com/google/gopacket"
     "github.com/google/gopacket/layers"
     "log"
@@ -107,24 +106,4 @@ func (s *Sensor) Packets() (packets chan gopacket.Packet) {
 
 func (s *Sensor) Streams() (streams chan *TcpStream) {
     return s.streamFactory.streams
-}
-
-func ExampleSensor() {
-    opt := &SensorOptions{
-        InterfaceName: "wlan0",
-        InterfaceType: AfpacketType,
-        IsPromiscuous: true,
-    }
-    src, err := NewSensor(opt)
-    if err != nil {
-        log.Fatal(err)
-    }
-    counter := 0
-    for stream := range src.Streams() {
-        fmt.Printf("new stream: %s %s %d\n", stream.NetworkFlow().String(), stream.TransportFlow().String(), len(stream.Payload()))
-        counter++
-        if counter == 10 {
-            break
-        }
-    }
 }
