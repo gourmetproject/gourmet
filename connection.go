@@ -1,12 +1,8 @@
 package gourmet
 
 import (
-	"log"
+	"bytes"
 	"time"
-)
-
-var (
-	logger *Logger
 )
 
 type Connection struct {
@@ -18,19 +14,12 @@ type Connection struct {
 	DestinationPort string
 	Duration        time.Duration
 	State          	string
+	payload         *bytes.Buffer
+	Analyzers       map[string]interface{}
 }
 
-func (cl *Logger) Log(c *Connection) {
-	cl.mutex.Lock()
-	err := cl.encoder.Encode(c)
-	if err != nil {
-		log.Println(err)
-	}
-	cl.mutex.Unlock()
-}
-
-func processTcpStream(ts *TcpStream) {
-	c := &Connection{
+func newTcpConnection(ts *TcpStream) (c *Connection) {
+	return &Connection{
 		Timestamp: ts.startTime,
 		UID: ts.net.FastHash() + ts.transport.FastHash(),
 		SourceIP: ts.net.Src().String(),
@@ -39,6 +28,7 @@ func processTcpStream(ts *TcpStream) {
 		DestinationPort: ts.transport.Dst().String(),
 		Duration: ts.duration,
 		State: ts.tcpState.String(),
+		payload: ts.payload,
+		Analyzers: make(map[string]interface{}),
 	}
-	logger.Log(c)
 }

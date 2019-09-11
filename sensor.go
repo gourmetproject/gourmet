@@ -54,7 +54,9 @@ func Start(options *SensorOptions) {
 		log.Fatal(err)
 	}
 	s := &Sensor{
-		streamFactory: &TcpStreamFactory{},
+		streamFactory: &TcpStreamFactory{
+			streams: make(chan *TcpStream),
+		},
 	}
 	if options.InterfaceType == PfringType {
 		s.source, err = newPfringSensor(options)
@@ -87,6 +89,7 @@ func Start(options *SensorOptions) {
 func (s *Sensor) run() {
 	s.streamFactory.createAssembler()
 	s.streamFactory.ticker = time.NewTicker(time.Second * 10)
+	go s.processStreams()
 	for {
 		p, _, err := s.source.ReadPacketData()
 		if err != nil {
@@ -94,24 +97,38 @@ func (s *Sensor) run() {
 			continue
 		}
 		packet := gopacket.NewPacket(p, layers.LayerTypeEthernet, gopacket.Default)
-		s.processPacket(packet)
+		go s.processNewPacket(packet)
 	}
 }
 
-func (s *Sensor) processPacket(packet gopacket.Packet) {
+func (s *Sensor) processNewPacket(packet gopacket.Packet) {
 	if packet.TransportLayer() != nil {
 		switch packet.TransportLayer().LayerType() {
 		case layers.LayerTypeTCP:
-			go s.streamFactory.newPacket(packet.NetworkLayer().NetworkFlow(), packet.TransportLayer().(*layers.TCP))
+			s.streamFactory.newPacket(packet.NetworkLayer().NetworkFlow(), packet.TransportLayer().(*layers.TCP))
+		case layers.LayerTypeUDP:
+			// TODO: UDP packet
 		}
 	}
-	if packet.ApplicationLayer() != nil {
-		switch packet.ApplicationLayer().LayerType() {
-		case layers.LayerTypeTLS:
-			go processTlsPacket(packet)
-		case layers.LayerTypeDNS:
-			go processDnsPacket(packet)
-		default:
+}
+
+func (s *Sensor) processStreams() {
+	for stream := range s.streamFactory.streams {
+		go processStream(stream)
+	}
+}
+
+func processStream(stream *TcpStream) {
+	c := newTcpConnection(stream)
+	for i, analyzer := range analyzers {
+		if analyzer.inUse && analyzer.Filter(c) {
+			fmt.Println(i)
+			result, err := analyzer.Analyze(c)
+			if err != nil {
+				log.Println(err)
+			}
+			c.Analyzers[result.Key()] = result
 		}
 	}
+	logger.Log(c)
 }

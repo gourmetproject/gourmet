@@ -53,6 +53,7 @@ type TcpStreamFactory struct {
 	assembler      *reassembly.Assembler
 	assemblerMutex sync.Mutex
 	ticker         *time.Ticker
+	streams        chan *TcpStream
 }
 
 func (tsf *TcpStreamFactory) New(n, t gopacket.Flow, tcp *layers.TCP, ac reassembly.AssemblerContext) reassembly.Stream {
@@ -71,7 +72,7 @@ func (tsf *TcpStreamFactory) New(n, t gopacket.Flow, tcp *layers.TCP, ac reassem
 		<-ts.done
 		// ignore empty streams
 		if ts.packets > 0 {
-			processStream(ts)
+			tsf.streams <- ts
 		}
 	}()
 	return ts
@@ -85,7 +86,7 @@ func (tsf *TcpStreamFactory) newPacket(netFlow gopacket.Flow, tcp *layers.TCP) {
 	default:
 		// pass through
 	}
-	go tsf.assemblePacket(netFlow, tcp)
+	tsf.assemblePacket(netFlow, tcp)
 }
 
 func (tsf *TcpStreamFactory) assemblePacket(netFlow gopacket.Flow, tcp *layers.TCP) {
@@ -97,16 +98,4 @@ func (tsf *TcpStreamFactory) assemblePacket(netFlow gopacket.Flow, tcp *layers.T
 func (tsf *TcpStreamFactory) createAssembler() {
 	streamPool := reassembly.NewStreamPool(tsf)
 	tsf.assembler = reassembly.NewAssembler(streamPool)
-}
-
-func processStream(ts *TcpStream) {
-	processTcpStream(ts)
-	switch ts.protocolType {
-	case HttpProtocol:
-		processHttpStream(ts)
-	case DnsProtocol:
-		processDnsStream(ts)
-	case TlsProtocol:
-		processTlsStream(ts)
-	}
 }
