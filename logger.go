@@ -18,7 +18,7 @@ type Logger struct {
 }
 
 type LogFile struct {
-	*SensorMetadata
+	*sensorMetadata
 	Connections []Connection
 }
 
@@ -28,7 +28,7 @@ func newLogger(logName string, interfaceName string) (*Logger, error) {
 		return nil, err
 	}
 	logFile := &LogFile{
-		SensorMetadata: getSensorMetadata(interfaceName),
+		sensorMetadata: getSensorMetadata(interfaceName),
 	}
 	initJson, err := json.MarshalIndent(logFile, "", "  ")
 	f.Write(initJson)

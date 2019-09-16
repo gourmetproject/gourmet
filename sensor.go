@@ -20,14 +20,14 @@ const (
 /*
 SENSOR METADATA
  */
-type SensorMetadata struct {
+type sensorMetadata struct {
 	Cores int
 	NetworkInterface string
 	NetworkAddress   []string
 }
 
-func getSensorMetadata(interfaceName string) *SensorMetadata{
-	return &SensorMetadata{
+func getSensorMetadata(interfaceName string) *sensorMetadata{
+	return &sensorMetadata{
 		Cores:            runtime.NumCPU(),
 		NetworkInterface: interfaceName,
 		NetworkAddress:   getInterfaceAddresses(interfaceName),
@@ -63,7 +63,7 @@ func initOptions(opt *SensorOptions) error {
 /*
 SENSOR
  */
-type Sensor struct {
+type sensor struct {
 	source        gopacket.PacketDataSource
 	streamFactory *tcpStreamFactory
 	connections   chan *Connection
@@ -76,7 +76,7 @@ func Start(options *SensorOptions) {
 		log.Fatal(err)
 	}
 	c := make(chan *Connection)
-	s := &Sensor{
+	s := &sensor{
 		connections: c,
 		streamFactory: &tcpStreamFactory{
 			connections: c,
@@ -90,7 +90,7 @@ func Start(options *SensorOptions) {
 	s.run()
 }
 
-func (s *Sensor) getPacketSource(options *SensorOptions) (err error) {
+func (s *sensor) getPacketSource(options *SensorOptions) (err error) {
 	if options.InterfaceType == PfringType {
 		s.source, err = newPfringSensor(options)
 		if err != nil {
@@ -112,7 +112,7 @@ func (s *Sensor) getPacketSource(options *SensorOptions) (err error) {
 	return nil
 }
 
-func (s *Sensor) run() {
+func (s *sensor) run() {
 	s.streamFactory.createAssembler()
 	s.streamFactory.ticker = time.NewTicker(time.Second * 10)
 	for {
@@ -126,7 +126,7 @@ func (s *Sensor) run() {
 	}
 }
 
-func (s *Sensor) processNewPacket(packet gopacket.Packet, ci gopacket.CaptureInfo) {
+func (s *sensor) processNewPacket(packet gopacket.Packet, ci gopacket.CaptureInfo) {
 	if packet.TransportLayer() != nil {
 		switch packet.TransportLayer().LayerType() {
 		case layers.LayerTypeTCP:
@@ -138,7 +138,7 @@ func (s *Sensor) processNewPacket(packet gopacket.Packet, ci gopacket.CaptureInf
 	}
 }
 
-func (s *Sensor) processConnections() {
+func (s *sensor) processConnections() {
 	for connection := range s.connections {
 		err := connection.analyze()
 		if err != nil {
