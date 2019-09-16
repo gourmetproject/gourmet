@@ -1,6 +1,6 @@
 # Gourmet
 
-![Gourmet Gopher](gourmet.png)
+![Gopher](gourmet.png)
 
 Gourmet is an exquisite network sensor designed to be fast, extendable, and security-focused. It
 utilizes Google's gopacket library to quickly decode and analyze large amounts of network traffic. 
