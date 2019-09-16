@@ -2,9 +2,8 @@ package http
 
 import (
 	"bufio"
+	"github.com/kvasirlabs/gourmet"
 	"net/http"
-
-	gourmet "../.."
 )
 
 type Request struct {

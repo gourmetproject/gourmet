@@ -13,16 +13,11 @@ type Analyzer interface {
 
 var registeredAnalyzers = make(map[string]Analyzer)
 
-func RegisterAnalyzer(name string, a Analyzer) RegisteredAnalyzer {
+func RegisterAnalyzer(name string, a Analyzer) {
 	if _, ok := registeredAnalyzers[name]; ok {
 		panic("analyzer type already exists")
 	}
-	return OverrideAnalyzer(name, a)
-}
-
-func OverrideAnalyzer(name string, a Analyzer) RegisteredAnalyzer {
 	registeredAnalyzers[name] = a
-	return RegisteredAnalyzer(name)
 }
 
 func GetRegisteredAnalyzer(name string) Analyzer {
