@@ -9,26 +9,25 @@ type Connection struct {
 	Timestamp       time.Time
 	UID             uint64
 	SourceIP        string
-	SourcePort      string
+	SourcePort      int
 	DestinationIP   string
-	DestinationPort string
-	Duration        time.Duration
-	State          	string
-	payload         *bytes.Buffer
+	DestinationPort int
+	TransportType   string
+	Duration        string        `json:",omitempty"`
+	State          	string        `json:",omitempty"`
+	Payload         *bytes.Buffer `json:"-"`
 	Analyzers       map[string]interface{}
 }
 
-func newTcpConnection(ts *TcpStream) (c *Connection) {
-	return &Connection{
-		Timestamp: ts.startTime,
-		UID: ts.net.FastHash() + ts.transport.FastHash(),
-		SourceIP: ts.net.Src().String(),
-		SourcePort: ts.transport.Src().String(),
-		DestinationIP: ts.net.Dst().String(),
-		DestinationPort: ts.transport.Dst().String(),
-		Duration: ts.duration,
-		State: ts.tcpState.String(),
-		payload: ts.payload,
-		Analyzers: make(map[string]interface{}),
+func (c *Connection) analyze() error{
+	for _, analyzer := range registeredAnalyzers {
+		if analyzer.Filter(c) {
+			result, err := analyzer.Analyze(c)
+			if err != nil {
+				return err
+			}
+			c.Analyzers[result.Key()] = result
+		}
 	}
+	return nil
 }

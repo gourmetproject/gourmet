@@ -2,18 +2,16 @@ package gourmet
 
 import (
 	"bytes"
-	"fmt"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/reassembly"
+	"strconv"
 	"sync"
 	"time"
 )
 
-// tcpStream is an implementation of reassembly.Stream
-type TcpStream struct {
+type tcpStream struct {
 	net, transport gopacket.Flow
-	protocolType   protocol
 	payload        *bytes.Buffer
 	startTime      time.Time
 	duration       time.Duration
@@ -23,7 +21,24 @@ type TcpStream struct {
 	payloadPackets int
 }
 
-func (ts *TcpStream) Accept(tcp *layers.TCP, ci gopacket.CaptureInfo, dir reassembly.TCPFlowDirection, nextSeq reassembly.Sequence, start *bool, ac reassembly.AssemblerContext) bool {
+func newConnectionFromTcp(ts *tcpStream) (c *Connection) {
+	srcPort, dstPort := processPorts(ts.transport)
+	return &Connection{
+		Timestamp: ts.startTime,
+		UID: ts.net.FastHash() + ts.transport.FastHash(),
+		SourceIP: ts.net.Src().String(),
+		SourcePort: srcPort,
+		DestinationIP: ts.net.Dst().String(),
+		DestinationPort: dstPort,
+		TransportType: "tcp",
+		Duration: strconv.FormatFloat(ts.duration.Seconds(), 'f', -1, 64),
+		State: ts.tcpState.String(),
+		Payload: ts.payload,
+		Analyzers: make(map[string]interface{}),
+	}
+}
+
+func (ts *tcpStream) Accept(tcp *layers.TCP, ci gopacket.CaptureInfo, dir reassembly.TCPFlowDirection, nextSeq reassembly.Sequence, start *bool, ac reassembly.AssemblerContext) bool {
 	tempDuration := ci.Timestamp.Sub(ts.startTime)
 	if tempDuration.Seconds() > ts.duration.Seconds() {
 		ts.duration = tempDuration
@@ -32,7 +47,7 @@ func (ts *TcpStream) Accept(tcp *layers.TCP, ci gopacket.CaptureInfo, dir reasse
 	return true
 }
 
-func (ts *TcpStream) ReassembledSG(sg reassembly.ScatterGather, ac reassembly.AssemblerContext) {
+func (ts *tcpStream) ReassembledSG(sg reassembly.ScatterGather, ac reassembly.AssemblerContext) {
 	length, _ := sg.Lengths()
 	data := sg.Fetch(length)
 	if length > 0 {
@@ -41,7 +56,7 @@ func (ts *TcpStream) ReassembledSG(sg reassembly.ScatterGather, ac reassembly.As
 	ts.packets++
 }
 
-func (ts *TcpStream) ReassemblyComplete(ac reassembly.AssemblerContext) bool {
+func (ts *tcpStream) ReassemblyComplete(ac reassembly.AssemblerContext) bool {
 	ts.done <- true
 	return false
 }
@@ -49,53 +64,53 @@ func (ts *TcpStream) ReassemblyComplete(ac reassembly.AssemblerContext) bool {
 // tcpStreamFactory contains channels to consume tcp streams and stream pairs. It also implements
 // the reassembly.StreamFactory interface. Each Sensor contains a tcpStreamFactory in order to
 // easily consume packets, streams, and stream pairs.
-type TcpStreamFactory struct {
+type tcpStreamFactory struct {
 	assembler      *reassembly.Assembler
 	assemblerMutex sync.Mutex
 	ticker         *time.Ticker
-	streams        chan *TcpStream
+	connections        chan *Connection
 }
 
-func (tsf *TcpStreamFactory) New(n, t gopacket.Flow, tcp *layers.TCP, ac reassembly.AssemblerContext) reassembly.Stream {
-	protocol := getTcpProtocol(t)
-	ts := &TcpStream{
+func (tsf *tcpStreamFactory) New(n, t gopacket.Flow, tcp *layers.TCP, ac reassembly.AssemblerContext) reassembly.Stream {
+	ts := &tcpStream{
 		net:          n,
 		transport:    t,
 		payload:      new(bytes.Buffer),
 		startTime:    ac.GetCaptureInfo().Timestamp,
 		tcpState:     reassembly.NewTCPSimpleFSM(reassembly.TCPSimpleFSMOptions{}),
 		done:         make(chan bool),
-		protocolType: protocol,
 	}
 	go func() {
 		// wait for reassembly to be done
 		<-ts.done
 		// ignore empty streams
 		if ts.packets > 0 {
-			tsf.streams <- ts
+			c := newConnectionFromTcp(ts)
+			tsf.connections <- c
 		}
 	}()
 	return ts
 }
 
-func (tsf *TcpStreamFactory) newPacket(netFlow gopacket.Flow, tcp *layers.TCP) {
+func (tsf *tcpStreamFactory) newPacket(netFlow gopacket.Flow, tcp *layers.TCP) {
 	select {
 	case <-tsf.ticker.C:
-		fmt.Println("flushing")
+		tsf.assemblerMutex.Lock()
 		tsf.assembler.FlushCloseOlderThan(time.Now().Add(time.Second * -40))
+		tsf.assemblerMutex.Unlock()
 	default:
 		// pass through
 	}
 	tsf.assemblePacket(netFlow, tcp)
 }
 
-func (tsf *TcpStreamFactory) assemblePacket(netFlow gopacket.Flow, tcp *layers.TCP) {
+func (tsf *tcpStreamFactory) assemblePacket(netFlow gopacket.Flow, tcp *layers.TCP) {
 	tsf.assemblerMutex.Lock()
 	tsf.assembler.Assemble(netFlow, tcp)
 	tsf.assemblerMutex.Unlock()
 }
 
-func (tsf *TcpStreamFactory) createAssembler() {
+func (tsf *tcpStreamFactory) createAssembler() {
 	streamPool := reassembly.NewStreamPool(tsf)
 	tsf.assembler = reassembly.NewAssembler(streamPool)
 }

@@ -1,5 +1,7 @@
 package gourmet
 
+type RegisteredAnalyzer string
+
 type Result interface{
 	Key() string
 }
@@ -9,34 +11,30 @@ type Analyzer interface {
 	Analyze(c *Connection) (Result, error)
 }
 
-type analyzer struct {
-	inUse bool
-	Analyzer
+var registeredAnalyzers = make(map[string]Analyzer)
+
+func RegisterAnalyzer(name string, a Analyzer) RegisteredAnalyzer {
+	if _, ok := registeredAnalyzers[name]; ok {
+		panic("analyzer type already exists")
+	}
+	return OverrideAnalyzer(name, a)
 }
 
-type RegisteredAnalyzer int
-
-const maxAnalyzers = 1000
-var analyzers [maxAnalyzers]analyzer
-
-func RegisterAnalyzer(num int, analyzer Analyzer) RegisteredAnalyzer {
-	if num >= maxAnalyzers {
-		panic("Analyzer value is too high")
-	}
-	if analyzers[num].inUse {
-		panic("Analyzer type already exists.")
-	}
-	return OverrideAnalyzer(num, analyzer)
+func OverrideAnalyzer(name string, a Analyzer) RegisteredAnalyzer {
+	registeredAnalyzers[name] = a
+	return RegisteredAnalyzer(name)
 }
 
-func OverrideAnalyzer(num int, a Analyzer) RegisteredAnalyzer {
-	analyzers[num] = analyzer{
-		inUse: true,
-		Analyzer: a,
-	}
-	return RegisteredAnalyzer(num)
+func GetRegisteredAnalyzer(name string) Analyzer {
+	return registeredAnalyzers[name]
 }
 
-var (
-	HttpAnalyzer = RegisterAnalyzer(1, &httpAnalyzer{})
-)
+func GetRegisteredAnalyzers() []Analyzer {
+	ra := make([]Analyzer, len(registeredAnalyzers))
+	i := 0
+	for k := range registeredAnalyzers {
+		ra[i] = registeredAnalyzers[k]
+		i++
+	}
+	return ra
+}

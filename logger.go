@@ -2,6 +2,7 @@ package gourmet
 
 import (
 	"encoding/json"
+	"io/ioutil"
 	"log"
 	"os"
 	"sync"
@@ -12,25 +13,47 @@ var (
 )
 
 type Logger struct {
-	encoder *json.Encoder
+	fileName string
 	mutex   sync.Mutex
-	connections chan *Connection
 }
 
-func newLogger(logName string) (*Logger, error) {
+type LogFile struct {
+	*SensorMetadata
+	Connections []Connection
+}
+
+func newLogger(logName string, interfaceName string) (*Logger, error) {
 	f, err := os.Create(logName)
 	if err != nil {
 		return nil, err
 	}
-	encoder := json.NewEncoder(f)
-	return &Logger{
-		encoder: encoder,
+	logFile := &LogFile{
+		SensorMetadata: getSensorMetadata(interfaceName),
+	}
+	initJson, err := json.MarshalIndent(logFile, "", "  ")
+	f.Write(initJson)
+	return &Logger {
+		fileName: logName,
 	}, nil
 }
 
-func (l *Logger) Log(c *Connection) {
+func (l *Logger) Log(c Connection) {
 	l.mutex.Lock()
-	err := l.encoder.Encode(c)
+	contents, err := ioutil.ReadFile(l.fileName)
+	if err != nil {
+		log.Println(err)
+	}
+	var logfile LogFile
+	err = json.Unmarshal(contents, &logfile)
+	if err != nil {
+		log.Println(err)
+	}
+	logfile.Connections = append(logfile.Connections, c)
+	newContents, err := json.MarshalIndent(logfile, "", "  ")
+	if err != nil {
+		log.Println(err)
+	}
+	err = ioutil.WriteFile(l.fileName, newContents, 0644)
 	if err != nil {
 		log.Println(err)
 	}
