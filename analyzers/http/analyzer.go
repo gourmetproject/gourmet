@@ -9,14 +9,14 @@ import (
 type Request struct {
 	Method                  string
 	URL                     string
-	Headers          http.Header
-	ContentLength    int64
+	Headers                 http.Header
+	ContentLength           int64
 	TransferEncoding        []string
 	Host                    string
 }
 
 type Response struct {
-	Status                string
+	Status        string
 	Headers       http.Header
 	ContentLength int64
 }

@@ -17,9 +17,7 @@ const (
 	PfringType   interfaceType = 2
 	LibpcapType  interfaceType = 3
 )
-/*
-SENSOR METADATA
- */
+
 type sensorMetadata struct {
 	Cores int
 	NetworkInterface string
@@ -34,9 +32,6 @@ func getSensorMetadata(interfaceName string) *sensorMetadata{
 	}
 }
 
-/*
-SENSOR OPTIONS
- */
 type SensorOptions struct {
 	InterfaceName string
 	InterfaceType interfaceType
@@ -60,9 +55,6 @@ func initOptions(opt *SensorOptions) error {
 	return nil
 }
 
-/*
-SENSOR
- */
 type sensor struct {
 	source        gopacket.PacketDataSource
 	streamFactory *tcpStreamFactory
