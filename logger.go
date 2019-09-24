@@ -18,17 +18,17 @@ type Logger struct {
 }
 
 type LogFile struct {
-	*sensorMetadata
+	*SensorMetadata
 	Connections []Connection
 }
 
-func newLogger(logName string, interfaceName string) (*Logger, error) {
+func newLogger(logName string, interfaceName string, cores int) (*Logger, error) {
 	f, err := os.Create(logName)
 	if err != nil {
 		return nil, err
 	}
 	logFile := &LogFile{
-		sensorMetadata: getSensorMetadata(interfaceName),
+		SensorMetadata: getSensorMetadata(interfaceName, cores),
 	}
 	initJson, err := json.MarshalIndent(logFile, "", "  ")
 	f.Write(initJson)

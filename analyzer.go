@@ -11,6 +11,8 @@ type Analyzer interface {
 	Analyze(c *Connection) (Result, error)
 }
 
+type NewAnalyzerFunc func() *Analyzer
+
 var registeredAnalyzers = make(map[string]Analyzer)
 
 func RegisterAnalyzer(name string, a Analyzer) {

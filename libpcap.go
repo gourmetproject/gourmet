@@ -24,7 +24,7 @@ func newLibpcapSensor(opt *SensorOptions) (*pcap.Handle, error) {
 	if err != nil {
 		return nil, err
 	}
-	err = handle.SetBPFFilter(opt.Filter)
+	err = handle.SetBPFFilter(opt.Bpf)
 	if err != nil {
 		return nil, err
 	}

@@ -5,28 +5,31 @@ import (
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"log"
-	"runtime"
+	"os"
 	"time"
 )
 
-type interfaceType byte
+type InterfaceType byte
 
 const (
 	// packet capture types
-	AfpacketType interfaceType = 1
-	PfringType   interfaceType = 2
-	LibpcapType  interfaceType = 3
+	AfpacketType InterfaceType = 1
+	PfringType   InterfaceType = 2
+	LibpcapType  InterfaceType = 3
 )
 
-type sensorMetadata struct {
+type SensorMetadata struct {
+	// Number of logical cores available on this sensor
 	Cores int
+	// The network interface that the sensor is capturing traffic
 	NetworkInterface string
+	// The IP address of the capturing network interface
 	NetworkAddress   []string
 }
 
-func getSensorMetadata(interfaceName string) *sensorMetadata{
-	return &sensorMetadata{
-		Cores:            runtime.NumCPU(),
+func getSensorMetadata(interfaceName string, cores int) *SensorMetadata{
+	return &SensorMetadata{
+		Cores:            cores,
 		NetworkInterface: interfaceName,
 		NetworkAddress:   getInterfaceAddresses(interfaceName),
 	}
@@ -34,11 +37,14 @@ func getSensorMetadata(interfaceName string) *sensorMetadata{
 
 type SensorOptions struct {
 	InterfaceName string
-	InterfaceType interfaceType
+	InterfaceType InterfaceType
 	IsPromiscuous bool
 	SnapLen       uint32
-	Filter        string
+	Bpf           string
+	Cores         int
 	Timeout       int
+	LogFile       *os.File
+	Analyzers     []Analyzer
 }
 
 func initOptions(opt *SensorOptions) error {
@@ -63,7 +69,7 @@ type sensor struct {
 
 func Start(options *SensorOptions) {
 	var err error
-	logger, err = newLogger("gourmet.log", options.InterfaceName)
+	logger, err = newLogger("gourmet.log", options.InterfaceName, options.Cores)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -113,19 +119,22 @@ func (s *sensor) run() {
 			log.Println(err)
 			continue
 		}
-		packet := gopacket.NewPacket(p, layers.LayerTypeEthernet, gopacket.Default)
+		packet := gopacket.NewPacket(p, layers.LayerTypeEthernet, gopacket.DecodeStreamsAsDatagrams)
 		go s.processNewPacket(packet, ci)
 	}
 }
 
 func (s *sensor) processNewPacket(packet gopacket.Packet, ci gopacket.CaptureInfo) {
-	if packet.TransportLayer() != nil {
-		switch packet.TransportLayer().LayerType() {
+    if packet.TransportLayer() != nil {
+    	layer := packet.TransportLayer()
+		switch layer.LayerType() {
 		case layers.LayerTypeTCP:
 			s.streamFactory.newPacket(packet.NetworkLayer().NetworkFlow(), packet.TransportLayer().(*layers.TCP))
+			return
 		case layers.LayerTypeUDP:
 			udp := processUdpPacket(packet, ci)
 			s.connections <- udp
+			return
 		}
 	}
 }

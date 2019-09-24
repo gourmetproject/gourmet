@@ -1,4 +1,4 @@
-package dns
+package main
 
 import (
 	"github.com/google/gopacket"
@@ -56,7 +56,7 @@ func (d *DNS) Key() string {
 
 type dnsAnalyzer struct{}
 
-func NewDnsAnalyzer() *dnsAnalyzer {
+func NewAnalyzer() *dnsAnalyzer {
 	return &dnsAnalyzer{}
 }
 

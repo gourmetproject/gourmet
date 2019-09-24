@@ -1,4 +1,4 @@
-package http
+package main
 
 import (
 	"bufio"
@@ -29,7 +29,7 @@ func (h *Http) Key() string {
 
 type httpAnalyzer struct{}
 
-func NewHttpAnalyzer() *httpAnalyzer {
+func NewAnalyzer() *httpAnalyzer {
 	return &httpAnalyzer{}
 }
 

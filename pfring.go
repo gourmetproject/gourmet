@@ -13,8 +13,8 @@ func newPfringSensor(opt *SensorOptions) (ring *pfring.Ring, err error) {
 	if err != nil {
 		return nil, err
 	}
-	if opt.Filter != "" {
-		err = ring.SetBPFFilter(opt.Filter)
+	if opt.Bpf != "" {
+		err = ring.SetBPFFilter(opt.Bpf)
 		if err != nil {
 			return nil, err
 		}

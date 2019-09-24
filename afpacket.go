@@ -10,7 +10,7 @@ func newAfpacketSensor(opt *SensorOptions) (*afpacket.TPacket, error) {
 	if err != nil {
 		return nil, err
 	}
-	if opt.Filter != "" {
+	if opt.Bpf != "" {
 		log.Println("Warning: filter option will not be applied when using afpacket sensor")
 	}
 	tPacket, err := afpacket.NewTPacket(

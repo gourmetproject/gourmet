@@ -1,0 +1,6 @@
+type: libpcap
+promiscuous: true
+interface: eno1
+snaplen: 65536
+analyzers:
+  - "github.com/kvasirlabs/gourmet/analyzers/http"
