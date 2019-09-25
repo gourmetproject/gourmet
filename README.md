@@ -1,13 +1,12 @@
 <h1 align="center">
 	<img alt="Gourmet gopher" src="https://raw.githubusercontent.com/gourmetproject/gourmet/master/gourmet.png" width="300">
-
-	Gourmet
 </h1>
-<h3 align="center">
+<h2 align="center">Gourmet</h2>
+<h4 align="center">
 	An exquisite network traffic analysis framework
 	<br>
 	Fast, simple, and customizable
-</h3>
+</h4>
 
 # Overview
 Gourmet is an exquisite network monitoring solution designed to be fast, easily configured, and
