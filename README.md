@@ -30,18 +30,16 @@ highly customized.
 Gourmet is designed from the ground up in Go, [the number one language developers want to learn
 in 2019](https://jaxenter.com/go-number-one-for-2019-hackerrank-report-155161.html). It utilizes
 Google's [gopacket](https://github.com/google/gopacket) library to quickly decode and analyze
-large amounts of network traffic. This language is much more "friendly" (think Python, not C/C++).
-This language choice will enable more developers to easily contribute to the project.
+large amounts of network traffic. Go makes it fast, easy to maintain, and [not C/C++](http://trevorjim.com/c-and-c++-are-dead-like-cobol-in-2017/).
 
 ### Highly Concurrent
 One of Go's shining features is [goroutines](https://golangbot.com/goroutines/). Goroutines are
 simply functions that run concurrently with other functions. They are much more lightweight,
-flexible, and easy to work with than standard threads.
+flexible, and easy to work with than standard threads. Goroutines communicate with each other using
+[channels](https://golangbot.com/channels/). Channels make it extremely simple to synchronize multithreaded Go programs. 
 
-Goroutines communicate with each other using
-[channels](https://golangbot.com/channels/). These two language paradigms dramatically improve the
-speed, memory efficiency, and simplicity of concurrently processing thousands of packets per
-second.
+These two language paradigms dramatically improve the speed, memory efficiency, and simplicity of concurrently processing 
+thousands, or even millions, of packets per second.
 
 ### Easily Customized through Go plugins
 Go 1.8, released in February 2017, introduced a new
