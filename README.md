@@ -1,7 +1,8 @@
 <h1 align="center">
-	<img alt="Gourmet gopher" src="https://raw.githubusercontent.com/gourmetproject/gourmet/master/gourmet.png" width="300">
-	<h2 align="center">Gourmet</h2>
-	<h4 align="center">
+	![Gourmet Gopher](https://raw.githubusercontent.com/gourmetproject/gourmet/master/gourmet.png)
+
+	Gourmet
+</h1><h4 align="center">
 		An exquisite network traffic analysis framework
 		<br>
 		Fast, simple, and customizable
