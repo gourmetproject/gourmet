@@ -79,8 +79,8 @@ between the two projects.
 | Feature          | Gourmet                                                       | Zeek                                                                           |
 |------------------|---------------------------------------------------------------|------------------------------------------------------------------------------------|
 | Log format       | Single JSON file; each connection is a root-level JSON object | Multiple CSV files; connection data across files is linked through connection UIDs |
-| Language         | Pure Go                                                       | Bro scripting language as a wrapper around C/C++                                   |
-| Customization    | Go Plugins                                                    | Bro scripts                                                                        |
+| Language         | Pure Go                                                       | Zeek scripting language as a wrapper around C/C++                                   |
+| Customization    | Go Plugins                                                    | Zeek scripts                                                                        |
 | Production-ready | Not yet, work in progress                                     | Yes                                                                                |
 | Open Source      | Yes                                                           | Yes                                                                                |
 | Multithreaded    | Yes                                                           | No (see [Zeek Cluster](https://docs.zeek.org/en/stable/cluster/index.html))        |
