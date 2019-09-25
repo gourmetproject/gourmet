@@ -94,8 +94,18 @@ between the two projects.
 | Open Source      | Yes                                                           | Yes                                                                                |
 | Multithreaded    | Yes                                                           | No (see [Zeek Cluster](https://docs.zeek.org/en/stable/cluster/index.html))        |
 
+# Contact Us
 
-# Support
+<a
+href="https://join.slack.com/t/gourmetproject/shared_invite/enQtNzczMjQ4MzgzMTg5LTRjOTllNjc2MzNhMDQyNDdiMWQwZjQ5OTEwZDEyYjhiNWEwZjI3M2Y2MzExMGQ1ZjNkZjlkMjlkYTc3ZDZmN2Y">
+	<img
+		src="https://cdn.appstorm.net/web.appstorm.net/web/files/2013/10/slack_icon.png"
+		alt="Slack icon"
+		width="40"
+	>
+</a>
+
+# Support Us
 
 [![Patreon][patreon-badge]][patreon-link]
 
