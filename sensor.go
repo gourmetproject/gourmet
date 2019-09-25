@@ -19,17 +19,14 @@ const (
 )
 
 type SensorMetadata struct {
-	// Number of logical cores available on this sensor
-	Cores int
 	// The network interface that the sensor is capturing traffic
 	NetworkInterface string
 	// The IP address of the capturing network interface
 	NetworkAddress   []string
 }
 
-func getSensorMetadata(interfaceName string, cores int) *SensorMetadata{
+func getSensorMetadata(interfaceName string) *SensorMetadata{
 	return &SensorMetadata{
-		Cores:            cores,
 		NetworkInterface: interfaceName,
 		NetworkAddress:   getInterfaceAddresses(interfaceName),
 	}
@@ -41,7 +38,6 @@ type SensorOptions struct {
 	IsPromiscuous bool
 	SnapLen       uint32
 	Bpf           string
-	Cores         int
 	Timeout       int
 	LogFile       *os.File
 	Analyzers     []Analyzer
@@ -69,7 +65,7 @@ type sensor struct {
 
 func Start(options *SensorOptions) {
 	var err error
-	logger, err = newLogger("gourmet.log", options.InterfaceName, options.Cores)
+	logger, err = newLogger("gourmet.log", options.InterfaceName)
 	if err != nil {
 		log.Fatal(err)
 	}

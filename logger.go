@@ -22,13 +22,13 @@ type LogFile struct {
 	Connections []Connection
 }
 
-func newLogger(logName string, interfaceName string, cores int) (*Logger, error) {
+func newLogger(logName string, interfaceName string) (*Logger, error) {
 	f, err := os.Create(logName)
 	if err != nil {
 		return nil, err
 	}
 	logFile := &LogFile{
-		SensorMetadata: getSensorMetadata(interfaceName, cores),
+		SensorMetadata: getSensorMetadata(interfaceName),
 	}
 	initJson, err := json.MarshalIndent(logFile, "", "  ")
 	f.Write(initJson)

@@ -1,6 +1,7 @@
 type: libpcap
 promiscuous: true
 interface: eno1
-snaplen: 65536
+snapshot_length: 262144
+log_file: gourmet.log
 analyzers:
-  - "github.com/kvasirlabs/gourmet/analyzers/http"
+  - "github.com/gourmetproject/http_analyzer"
