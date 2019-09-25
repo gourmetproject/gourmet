@@ -43,6 +43,8 @@ type SensorOptions struct {
 	Analyzers     []Analyzer
 }
 
+var analyzers []Analyzer
+
 func initOptions(opt *SensorOptions) error {
 	if opt.InterfaceName == "" {
 		return errors.New("interface not set in options")
@@ -76,6 +78,7 @@ func Start(options *SensorOptions) {
 			connections: c,
 		},
 	}
+	analyzers = options.Analyzers
 	err = s.getPacketSource(options)
 	if err != nil {
 		log.Fatal(err)

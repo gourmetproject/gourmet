@@ -1,7 +1,9 @@
 type: libpcap
 promiscuous: true
-interface: eth0
+interface: eno1
 snapshot_length: 262144
 log_file: gourmet.log
 analyzers:
+  - "github.com/gourmetproject/simple_analyzer"
   - "github.com/gourmetproject/http_analyzer"
+  - "github.com/gourmetproject/dns_analyzer"

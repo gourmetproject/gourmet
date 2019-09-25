@@ -20,7 +20,7 @@ type Connection struct {
 }
 
 func (c *Connection) analyze() error{
-	for _, analyzer := range registeredAnalyzers {
+	for _, analyzer := range analyzers {
 		if analyzer.Filter(c) {
 			result, err := analyzer.Analyze(c)
 			if err != nil {

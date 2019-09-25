@@ -102,7 +102,7 @@ func main() {
 		Analyzers:     analyzers,
 	}
 	fmt.Println(opts)
-	//gourmet.Start(opts)
+	gourmet.Start(opts)
 }
 
 func parseConfigFile(cf string) (c *Config, err error) {
