@@ -169,10 +169,7 @@ func convertIfaceType(ifaceType string) (gourmet.InterfaceType, error) {
 }
 
 func newAnalyzers(links []string) (analyzers []gourmet.Analyzer, err error) {
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		return nil, err
-	}
+	goPath := os.Getenv("GOPATH")
 	var analyzerFiles []string
 	for _, link := range links {
 		fmt.Printf("[*] Installing %s\n", link)
@@ -180,7 +177,7 @@ func newAnalyzers(links []string) (analyzers []gourmet.Analyzer, err error) {
 		if err != nil {
 			return nil, errors.New(fmt.Sprintf("failed to install %s: %s", link, err.Error()))
 		}
-		analyzerFiles = append(analyzerFiles, fmt.Sprintf("%s/go/src/%s/main.go", homeDir, link))
+		analyzerFiles = append(analyzerFiles, filepath.Join(goPath, fmt.Sprintf("/src/%s/main.go", link)))
 	}
 	if len(analyzerFiles) > 0 {
 		for _, analyzerFile := range analyzerFiles {
