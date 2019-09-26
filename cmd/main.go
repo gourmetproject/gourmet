@@ -39,24 +39,12 @@ func (al *AnalyzerLinks) Set(analyzer string) error {
 }
 
 var (
-	analyzerLinks AnalyzerLinks
-	flagInterfaceType = flag.String("y", "libpcap",
-		"The packet processing technology for capture (libpcap, afpacket, or pf_ring)")
-	flagInterface = flag.String("i", "", "The name of the network interface (required)")
-	flagPromiscuous = flag.Bool("p", false, "Promiscuous mode")
-	flagSnapLength = flag.Int("s", 262144, "The snapshot length for packet capture")
-	flagBpf = flag.String("f", "", "Berkeley packet filter to apply to the capturing interface")
-	flagConfig = flag.String("c", "",
-		"Gourmet configuration. If this is set, all other command-line flags are ignored")
-	flagLogFile = flag.String("l", "gourmet.log", "The output log file")
-	flagTimeout = flag.Int("t", 0, "The number of seconds to run the sensor. Zero is no timeout.")
+	flagConfig = flag.String("c", "", "Gourmet configuration file")
 )
 
 func main() {
 	var c *Config
 	var err error
-	flag.Var(&analyzerLinks, "a",
-		"Gourmet analyzer to enrich capture. This flag can be set more than once.")
 	flag.Parse()
 	if *flagConfig != "" {
 		c, err = parseConfigFile(*flagConfig)
@@ -64,16 +52,11 @@ func main() {
 			log.Fatal(err)
 		}
 	} else {
-		c = &Config{
-			InterfaceType: *flagInterfaceType,
-			Interface:     *flagInterface,
-			Promiscuous:   *flagPromiscuous,
-			SnapLen:       *flagSnapLength,
-			Bpf:           *flagBpf,
-			Timeout:       *flagTimeout,
-			LogFile:       *flagLogFile,
-			Analyzers:     analyzerLinks,
+		execPath, err := os.Executable()
+		if err != nil {
+			log.Fatal(err)
 		}
+		log.Fatalf("configuration file option not set. Run '%s -h' for more information", execPath)
 	}
 	err = validateConfig(c)
 	if err != nil {
