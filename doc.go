@@ -37,7 +37,7 @@ file.
 Creating Your Own Analyzer
 
 Analyzers are an implementation of the Analyzer interface. They are written as a Go plugin. More
-information about Go plugins can be found here: golang.org/pkg/plugin.
+information about Go plugins can be found here: https://golang.org/pkg/plugin.
 
 Example custom analyzers can be found in the Gourmet Project repository at
 https://github.com/gourmetproject. simple_analyzer is the best one to start with.
