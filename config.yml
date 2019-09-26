@@ -2,7 +2,7 @@ type: libpcap
 promiscuous: true
 interface: eth0
 snapshot_length: 262144
-log_file: gourmet.log
+log_file: /log/gourmet.log
 analyzers:
   - "github.com/gourmetproject/simple_analyzer"
   - "github.com/gourmetproject/http_analyzer"
