@@ -45,6 +45,7 @@ var (
 func main() {
 	var c *Config
 	var err error
+
 	flag.Parse()
 	if *flagConfig != "" {
 		c, err = parseConfigFile(*flagConfig)
@@ -52,11 +53,10 @@ func main() {
 			log.Fatal(err)
 		}
 	} else {
-		execPath, err := os.Executable()
+		c, err = parseConfigFile("config.yml")
 		if err != nil {
 			log.Fatal(err)
 		}
-		log.Fatalf("configuration file option not set. Run '%s -h' for more information", execPath)
 	}
 	err = validateConfig(c)
 	if err != nil {
