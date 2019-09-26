@@ -31,7 +31,8 @@ connections, the stream is first reassembled and then turned into a Connection o
 
 Usage With Analyzers
 
-If you wish to add an analyzer to Gourmet, you must add the GitHub URL to the config.yml file.
+If you wish to add an analyzer to Gourmet, you must add the analyzer repo URL to the config.yml
+file.
 
 Creating Your Own Analyzer
 
