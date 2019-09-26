@@ -1,7 +1,5 @@
-type: libpcap
-promiscuous: false
-interface: eth0
-snapshot_length: 262144
-log_file: /log/gourmet.log
+interface: eno1
+type: afpacket
+connection_timeout: 10
 analyzers:
   - "github.com/gourmetproject/simple_analyzer"

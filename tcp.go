@@ -67,8 +67,9 @@ func (ts *tcpStream) ReassemblyComplete(ac reassembly.AssemblerContext) bool {
 type tcpStreamFactory struct {
 	assembler      *reassembly.Assembler
 	assemblerMutex sync.Mutex
+	connTimeout    int
 	ticker         *time.Ticker
-	connections        chan *Connection
+	connections    chan *Connection
 }
 
 func (tsf *tcpStreamFactory) New(n, t gopacket.Flow, tcp *layers.TCP, ac reassembly.AssemblerContext) reassembly.Stream {
@@ -96,7 +97,7 @@ func (tsf *tcpStreamFactory) newPacket(netFlow gopacket.Flow, tcp *layers.TCP) {
 	select {
 	case <-tsf.ticker.C:
 		tsf.assemblerMutex.Lock()
-		tsf.assembler.FlushCloseOlderThan(time.Now().Add(time.Second * -40))
+		tsf.assembler.FlushCloseOlderThan(time.Now().Add(time.Second * time.Duration(-1 * tsf.connTimeout)))
 		tsf.assemblerMutex.Unlock()
 	default:
 		// pass through

@@ -14,7 +14,6 @@ type InterfaceType byte
 const (
 	// packet capture types
 	AfpacketType InterfaceType = 1
-	PfringType   InterfaceType = 2
 	LibpcapType  InterfaceType = 3
 )
 
@@ -36,6 +35,7 @@ type SensorOptions struct {
 	InterfaceName string
 	InterfaceType InterfaceType
 	IsPromiscuous bool
+	ConnTimeout   int
 	SnapLen       uint32
 	Bpf           string
 	LogFileName   string
@@ -59,7 +59,7 @@ func initOptions(opt *SensorOptions) error {
 }
 
 type sensor struct {
-	source        gopacket.PacketDataSource
+	source        gopacket.ZeroCopyPacketDataSource
 	streamFactory *tcpStreamFactory
 	connections   chan *Connection
 }
@@ -75,6 +75,7 @@ func Start(options *SensorOptions) {
 		connections: c,
 		streamFactory: &tcpStreamFactory{
 			connections: c,
+			connTimeout: options.ConnTimeout,
 		},
 	}
 	analyzers = options.Analyzers
@@ -88,12 +89,7 @@ func Start(options *SensorOptions) {
 }
 
 func (s *sensor) getPacketSource(options *SensorOptions) (err error) {
-	if options.InterfaceType == PfringType {
-		s.source, err = newPfringSensor(options)
-		if err != nil {
-			return err
-		}
-	} else if options.InterfaceType == AfpacketType {
+	if options.InterfaceType == AfpacketType {
 		s.source, err = newAfpacketSensor(options)
 		if err != nil {
 			return err
@@ -113,7 +109,7 @@ func (s *sensor) run() {
 	s.streamFactory.createAssembler()
 	s.streamFactory.ticker = time.NewTicker(time.Second * 10)
 	for {
-		p, ci, err := s.source.ReadPacketData()
+		p, ci, err := s.source.ZeroCopyReadPacketData()
 		if err != nil {
 			log.Println(err)
 			continue

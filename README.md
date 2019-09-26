@@ -14,9 +14,11 @@ Gourmet
 # Overview
 
 ### Features
-- Libpcap, AF_PACKET, and PF_RING support
+- Libpcap support
+- AF_PACKET support
+- Zero copy packet processing (fast!)
 - Automatic TCP stream reassembly
-- Berkeley Packet Filter support (currently only for libpcap and PF_RING)
+- Berkeley Packet Filter support (currently only for libpcap)
 - Easily extendable through Go Plugins (see Analyzers section below)
 
 ### Upcoming Features
@@ -31,23 +33,26 @@ git clone https://github.com/gourmetproject/gourmet
 cd gourmet
 docker-compose up
 ```
-Make sure you change the `interface` argument in `config.yml` to the network interface on your host machine that you want
-capture traffic on. Gourmet will log all captured traffic to `gourmet.log`.
+Make sure you change the `interface` argument in `config.yml` to the network interface on your host
+machine that you want capture traffic on. Gourmet will log all captured traffic to `gourmet.log`.
 
 # Design
 ### Written in Go
 Gourmet is designed from the ground up in Go, [the number one language developers want to learn
 in 2019](https://jaxenter.com/go-number-one-for-2019-hackerrank-report-155161.html). It utilizes
 Google's [gopacket](https://github.com/google/gopacket) library to quickly decode and analyze
-large amounts of network traffic. Go makes it fast, easy to maintain, and [not C/C++](http://trevorjim.com/c-and-c++-are-dead-like-cobol-in-2017/).
+large amounts of network traffic. Go makes it fast, easy to maintain, and
+[not C/C++](http://trevorjim.com/c-and-c++-are-dead-like-cobol-in-2017/).
 
 ### Highly Concurrent
 One of Go's shining features is [goroutines](https://golangbot.com/goroutines/). Goroutines are
 simply functions that run concurrently with other functions. They are much more lightweight,
 flexible, and easy to work with than standard threads. Goroutines communicate with each other using
-[channels](https://golangbot.com/channels/). Channels make it extremely simple to synchronize multithreaded Go programs. 
+[channels](https://golangbot.com/channels/). Channels make it extremely simple to synchronize
+multithreaded Go programs. 
 
-These two language paradigms dramatically improve the speed, memory efficiency, and simplicity of concurrently processing 
+These two language paradigms dramatically improve the speed, memory efficiency, and simplicity of
+concurrently processing 
 thousands, or even millions, of packets per second.
 
 ### Easily Customized through Go plugins
@@ -66,11 +71,12 @@ developers to create and share their own analyzers as Go plugins.
 
 In order to create your own analyzer, you must implement the Analyzer interface. This interface is
 fully documented in the
-[Gourmet documentation](https://godoc.org/github.com/gourmetproject/gourmet#Analyzer). A simple
+[Gourmet documentation](https://godoc.org/github.com/gourmetproject/gourmet). A simple
 example can be found in the [simple_analyzer](https://github.com/gourmetproject/simple_analyzer)
 repository.
 
-In order to implement the interface, you must create a new struct that has a Filter and Analyze function.
+In order to implement the interface, you must create a new struct that has a Filter and Analyze
+function.
 
 ### Filter
 The Filter function takes a `*gourmet.Connection` object pointer as a parameter, determines

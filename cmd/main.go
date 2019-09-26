@@ -13,7 +13,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"plugin"
-	"runtime/pprof"
 	"strings"
 )
 
@@ -21,6 +20,7 @@ type Config struct {
 	InterfaceType string `yaml:"type"`
 	Interface     string
 	Promiscuous   bool
+	ConnTimeout   int    `yaml:"connection_timeout"`
 	SnapLen       int    `yaml:"snapshot_length"`
 	Bpf           string
 	LogFile       string `yaml:"log_file"`
@@ -57,6 +57,7 @@ func main() {
 			log.Fatal(err)
 		}
 	}
+	setDefaults(c)
 	err = validateConfig(c)
 	if err != nil {
 		log.Fatal(err)
@@ -94,6 +95,18 @@ func parseConfigFile(cf string) (c *Config, err error) {
 	return c, err
 }
 
+func setDefaults(c *Config) {
+	if c.SnapLen == 0 {
+		c.SnapLen = 262144
+	}
+	if c.LogFile == "" {
+		c.LogFile = "gourmet.log"
+	}
+	if c.InterfaceType == "" {
+		c.InterfaceType = "libpcap"
+	}
+}
+
 func validateConfig(c *Config) (err error) {
 	if err = validateInterface(c.Interface); err != nil {
 		return err
@@ -127,22 +140,13 @@ func validateSnapshotLength(snapLen int) error {
 	return nil
 }
 
-func validateTimeout(timeout int) error {
-	if timeout < 0 {
-		return errors.New("timeout must be a positive integer, or zero for no timeout")
-	}
-	return nil
-}
-
 func convertIfaceType(ifaceType string) (gourmet.InterfaceType, error) {
 	if ifaceType == "libpcap" {
 		return gourmet.LibpcapType, nil
 	} else if ifaceType == "afpacket" {
 		return gourmet.AfpacketType, nil
-	} else if ifaceType == "pf_ring" {
-		return gourmet.PfringType, nil
 	} else {
-		return 0, errors.New("invalid interface type. Must be libpcap, afpacket, or pf_ring")
+		return 0, errors.New("invalid interface type. Must be libpcap or afpacket")
 	}
 }
 
