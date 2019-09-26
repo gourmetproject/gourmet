@@ -13,6 +13,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"plugin"
+	"runtime/pprof"
 	"strings"
 )
 
@@ -22,7 +23,6 @@ type Config struct {
 	Promiscuous   bool
 	SnapLen       int    `yaml:"snapshot_length"`
 	Bpf           string
-	Timeout       int
 	LogFile       string `yaml:"log_file"`
 	Analyzers     AnalyzerLinks
 }
@@ -45,7 +45,6 @@ var (
 func main() {
 	var c *Config
 	var err error
-
 	flag.Parse()
 	if *flagConfig != "" {
 		c, err = parseConfigFile(*flagConfig)
@@ -76,7 +75,6 @@ func main() {
 		IsPromiscuous: c.Promiscuous,
 		SnapLen:       uint32(c.SnapLen),
 		Bpf:           c.Bpf,
-		Timeout:       c.Timeout,
 		LogFileName:   c.LogFile,
 		Analyzers:     analyzers,
 	}
@@ -101,9 +99,6 @@ func validateConfig(c *Config) (err error) {
 		return err
 	}
 	if err = validateSnapshotLength(c.SnapLen); err != nil {
-		return err
-	}
-	if err = validateTimeout(c.Timeout); err != nil {
 		return err
 	}
 	return nil

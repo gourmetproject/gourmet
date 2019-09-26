@@ -38,8 +38,7 @@ type SensorOptions struct {
 	IsPromiscuous bool
 	SnapLen       uint32
 	Bpf           string
-	Timeout       int
-	LogFileName       string
+	LogFileName   string
 	Analyzers     []Analyzer
 }
 
