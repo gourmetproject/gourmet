@@ -2,6 +2,7 @@ package gourmet
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -25,13 +26,20 @@ type LogFile struct {
 func newLogger(logName string, interfaceName string) (*Logger, error) {
 	f, err := os.Create(logName)
 	if err != nil {
+		fmt.Println("meow")
 		return nil, err
 	}
 	logFile := &LogFile{
 		SensorMetadata: getSensorMetadata(interfaceName),
 	}
 	initJson, err := json.MarshalIndent(logFile, "", "  ")
-	f.Write(initJson)
+	if err != nil {
+		return nil, err
+	}
+	_, err = f.Write(initJson)
+	if err != nil {
+		return nil, err
+	}
 	return &Logger {
 		fileName: logName,
 	}, nil

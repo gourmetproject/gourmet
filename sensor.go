@@ -2,10 +2,10 @@ package gourmet
 
 import (
 	"errors"
+	"fmt"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"log"
-	"os"
 	"time"
 )
 
@@ -39,7 +39,7 @@ type SensorOptions struct {
 	SnapLen       uint32
 	Bpf           string
 	Timeout       int
-	LogFile       *os.File
+	LogFileName       string
 	Analyzers     []Analyzer
 }
 
@@ -67,7 +67,7 @@ type sensor struct {
 
 func Start(options *SensorOptions) {
 	var err error
-	logger, err = newLogger("gourmet.log", options.InterfaceName)
+	logger, err = newLogger(options.LogFileName, options.InterfaceName)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -84,6 +84,7 @@ func Start(options *SensorOptions) {
 		log.Fatal(err)
 	}
 	go s.processConnections()
+	fmt.Printf("\nGourmet is running and logging to %s. Press CTL+C to stop...", logger.fileName)
 	s.run()
 }
 

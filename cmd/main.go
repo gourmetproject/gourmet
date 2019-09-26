@@ -83,10 +83,6 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	logFile, err := os.Create(c.LogFile)
-	if err != nil {
-		log.Fatal(err)
-	}
 	analyzers, err := newAnalyzers(c.Analyzers)
 	if err != nil {
 		log.Fatal(err)
@@ -98,10 +94,9 @@ func main() {
 		SnapLen:       uint32(c.SnapLen),
 		Bpf:           c.Bpf,
 		Timeout:       c.Timeout,
-		LogFile:       logFile,
+		LogFileName:   c.LogFile,
 		Analyzers:     analyzers,
 	}
-	fmt.Println(opts)
 	gourmet.Start(opts)
 }
 
@@ -180,16 +175,17 @@ func newAnalyzers(links []string) (analyzers []gourmet.Analyzer, err error) {
 	}
 	var analyzerFiles []string
 	for _, link := range links {
+		fmt.Printf("[*] Installing %s\n", link)
 		err = exec.Command("go", "get", "-u", "-d", link).Run()
 		if err != nil {
 			return nil, errors.New(fmt.Sprintf("failed to install %s: %s", link, err.Error()))
 		}
 		analyzerFiles = append(analyzerFiles, fmt.Sprintf("%s/go/src/%s/main.go", homeDir, link))
 	}
-	fmt.Println(analyzerFiles)
 	if len(analyzerFiles) > 0 {
 		for _, analyzerFile := range analyzerFiles {
 			folderName := filepath.Dir(analyzerFile)
+			fmt.Printf("[*] Building %s\n", filepath.Base(filepath.Dir(analyzerFile)))
 			out, err := exec.Command("go", "build", "-buildmode=plugin", "-o",
 				fmt.Sprintf("%s/main.so", filepath.Dir(analyzerFile)), analyzerFile).CombinedOutput()
 			if err != nil {
