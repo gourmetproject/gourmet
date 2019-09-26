@@ -12,8 +12,6 @@ Gourmet
 </h4>
 
 # Overview
-Gourmet is an exquisite network monitoring solution designed to be fast, easily configured, and
-highly customized.
 
 ### Features
 - Libpcap, AF_PACKET, and PF_RING support
@@ -24,6 +22,17 @@ highly customized.
 ### Upcoming Features
 - BPF support for AF_PACKET
 - Binary release w/ command-line configuration
+
+# Usage
+
+Gourmet is not yet finished. But if you would like to give it a test ride, you can do the following:
+```
+git clone https://github.com/gourmetproject/gourmet
+cd gourmet
+docker-compose up
+```
+Make sure you change the `interface` argument in `config.yml` to the network interface on your host machine that you want
+capture traffic on. Gourmet will log all captured traffic to `gourmet.log`.
 
 # Design
 ### Written in Go
