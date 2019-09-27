@@ -6,6 +6,9 @@ go:
 script:
   - make build
 
+apt_packages:
+  - libpcap-dev
+
 deploy:
   provider: releases
   skip_cleanup: true
