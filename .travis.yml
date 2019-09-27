@@ -1,13 +1,18 @@
 language: go
 
 go:
-  - master
+  - 1.11.x
+  - 1.12.x
+  - 1.13.x
+
 
 script:
   - make build
 
-apt_packages:
-  - libpcap-dev
+addons:
+  apt:
+    packages:
+      libpcap-dev
 
 deploy:
   provider: releases
