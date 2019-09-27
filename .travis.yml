@@ -1,0 +1,17 @@
+language: go
+
+go:
+  - master
+
+script:
+  - make build
+
+deploy:
+  provider: releases
+  skip_cleanup: true
+  api_key:
+    secure: Za5tJlHsHZpzdpMwOHW2oO0l5k353dPeVwuorWSFaFgi64OOWzkd0bUb4UELm8RhS+nohmtV29mUSlm7ey1IaL26AczmwmQOV/EMgrMEhGgiSmkn09oUUmrfOoYKMx5vyTS6+SduuzUSnX1KgAMQQ7kdYQPoe0fF4sZ9Uz8BTDFf3YA3BbHWfyzqCgNNTG/U/GOP6iO9/aD5/+nZWjy9RXrh5x39EnFhUs61NxtiNO64WAU2XiOuFa2zXejhbSkzswKhhIiyAeyJkAP7VGIvtriMZTDSn+m6Wq1JdfVDCdAbbHDKFW/aRSxdfsi6mHw8M6+U8PcNUVBDs33KDL8By3eln2Cv1zQR8V6ESOdkUlksFWXPNq0q+aFYB2kuErNy56DW6gzukaP/qIb5XN9p9BzLpKcPWFNsN+IvI4ylG90s7N9xHFobbG+I6hUVGso9sIdHdND15QBcdhF+KuUOrIefH6314OMTWR3V4gonXKMy4r3fonT0WxYpiyBEhXhq0rfn+ueVnEthDJiqUs8Z/vo6hlOIAjgnUfJu2xIl4cByUuSxEn85B7ZfB9bruQpwAd5BkXUHQy5pTCjSREF+G3qdOZojbqdI8vV/sbmCg+C+1d01KnbdXjG30oQ0E7ivkIzW44Qnns9PaRUgO5qxID0BjXTdg3m7NRTuwCAX9y4=
+  file: bin/gourmet
+  on:
+    repo: gourmetproject/gourmet
+    tags: true

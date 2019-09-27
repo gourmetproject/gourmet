@@ -52,8 +52,7 @@ flexible, and easy to work with than standard threads. Goroutines communicate wi
 multithreaded Go programs. 
 
 These two language paradigms dramatically improve the speed, memory efficiency, and simplicity of
-concurrently processing 
-thousands, or even millions, of packets per second.
+concurrently processing thousands, or even millions, of packets per second.
 
 ### Easily Customized through Go plugins
 Go 1.8, released in February 2017, introduced a new
