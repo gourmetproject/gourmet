@@ -1,6 +1,11 @@
-interface: eno1
-type: afpacket
-connection_timeout: 10
+interface:
+type: libpcap
+promiscuous: false
+connection_timeout:
+snapshot_length: 262144
+bpf:
+max_cores:
+log_file: gourmet.log
 skip_update: true
 analyzers:
   github.com/gourmetproject/dnsanalyzer:

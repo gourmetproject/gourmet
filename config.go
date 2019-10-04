@@ -10,6 +10,7 @@ type Config struct {
 	InterfaceType   string `json:"type"`
 	Interface       string
 	Promiscuous     bool
+	MaxCores        int    `json:"max_cores"`
 	ConnTimeout     int    `json:"connection_timeout"`
 	SnapLen         int    `json:"snapshot_length"`
 	Bpf             string

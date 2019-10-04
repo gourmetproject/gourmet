@@ -14,6 +14,7 @@ import (
 	"os/user"
 	"path/filepath"
 	"plugin"
+	"runtime"
 )
 
 var (
@@ -35,6 +36,9 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
+	}
+	if c.MaxCores != 0 && c.MaxCores < runtime.NumCPU(){
+		runtime.GOMAXPROCS(c.MaxCores)
 	}
 	setDefaults(c)
 	err = validateConfig(c)
