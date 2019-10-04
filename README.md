@@ -92,6 +92,14 @@ Result object can be any data structure you like, such as a string, map, array, 
 Result interface only requires you implement the Key function, which returns a string. This string
 is used as the key value when we add the Result object to the JSON log for the Connection.
 
+# Analyzer List
+
+- [HTTP Analyzer](https://github.com/gourmetproject/httpanalyzer) - Logs information about HTTP traffic
+- [DNS Analyzer](https://github.com/gourmetproject/dnsanalyzer) - Logs information about DNS traffic
+- [Simple Analyzer](https://github.com/gourmetproject/simpleanalyzer) - Logs the number of bytes in the connection payload
+- [Bedtime Analyzer](https://github.com/gourmetproject/bedtimeanalyzer) - If a specificed domain (such as Netflix) was accessed between certain hours of the day, a Slack bot sends you a message
+   - Good example of analyzers depending on other analyzers and using the `init()` function to maintain state.
+
 # Gourmet vs. Zeek (aka Bro)
 It is no secret that Zeek is the top choice for network security monitoring.  One of the goals of
 this project is to provide an alternative to Zeek. The table below illustrates some key differences
