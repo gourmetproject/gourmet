@@ -4,46 +4,24 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"github.com/ghodss/yaml"
 	"github.com/google/gopacket/pcap"
 	"github.com/gourmetproject/gourmet"
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
+	"os/user"
 	"path/filepath"
 	"plugin"
-	"strings"
 )
-
-type Config struct {
-	InterfaceType string `yaml:"type"`
-	Interface     string
-	Promiscuous   bool
-	ConnTimeout   int    `yaml:"connection_timeout"`
-	SnapLen       int    `yaml:"snapshot_length"`
-	Bpf           string
-	LogFile       string `yaml:"log_file"`
-	Analyzers     AnalyzerLinks
-}
-
-type AnalyzerLinks []string
-
-func (al *AnalyzerLinks) String() string {
-	return fmt.Sprintln("[" + strings.Join(*al, ", ") + "]")
-}
-
-func (al *AnalyzerLinks) Set(analyzer string) error {
-	*al = append(*al, strings.TrimSpace(analyzer))
-	return nil
-}
 
 var (
 	flagConfig = flag.String("c", "", "Gourmet configuration file")
 )
 
 func main() {
-	var c *Config
+	var c *gourmet.Config
 	var err error
 	flag.Parse()
 	if *flagConfig != "" {
@@ -66,7 +44,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	analyzers, err := newAnalyzers(c.Analyzers)
+	analyzers, err := newAnalyzers(c.Analyzers, c.UpdateAnalyzers)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -82,20 +60,21 @@ func main() {
 	gourmet.Start(opts)
 }
 
-func parseConfigFile(cf string) (c *Config, err error) {
-	c = &Config{}
+func parseConfigFile(cf string) (c *gourmet.Config, err error) {
+	c = &gourmet.Config{}
 	contents, err := ioutil.ReadFile(cf)
 	if err != nil {
 		return nil, err
 	}
 	err = yaml.Unmarshal(contents, c)
 	if err != nil {
+		fmt.Printf("%#v\n", c)
 		return nil, err
 	}
 	return c, err
 }
 
-func setDefaults(c *Config) {
+func setDefaults(c *gourmet.Config) {
 	if c.SnapLen == 0 {
 		c.SnapLen = 262144
 	}
@@ -107,7 +86,7 @@ func setDefaults(c *Config) {
 	}
 }
 
-func validateConfig(c *Config) (err error) {
+func validateConfig(c *gourmet.Config) (err error) {
 	if err = validateInterface(c.Interface); err != nil {
 		return err
 	}
@@ -150,16 +129,35 @@ func convertIfaceType(ifaceType string) (gourmet.InterfaceType, error) {
 	}
 }
 
-func newAnalyzers(links []string) (analyzers []gourmet.Analyzer, err error) {
-	goPath := os.Getenv("GOPATH")
+func newAnalyzers(links map[string]interface{}, update bool) (analyzers []gourmet.Analyzer, err error) {
+	usr, err := user.Current()
+	if err != nil {
+		return nil, err
+	}
+	homeDir := usr.HomeDir
+	pluginsDir := filepath.Join(homeDir, ".gourmet/plugins/")
 	var analyzerFiles []string
-	for _, link := range links {
-		fmt.Printf("[*] Installing %s\n", link)
-		err = exec.Command("go", "get", "-u", "-d", link).Run()
-		if err != nil {
-			return nil, errors.New(fmt.Sprintf("failed to install %s: %s", link, err.Error()))
+	for link := range links {
+		pluginDir := filepath.Join(pluginsDir, link)
+		mainPath := filepath.Join(pluginDir, "main.go")
+		exists, err := dirExists(pluginDir); if err != nil {
+			return nil, err
 		}
-		analyzerFiles = append(analyzerFiles, filepath.Join(goPath, fmt.Sprintf("/src/%s/main.go", link)))
+		if !exists {
+			fmt.Printf("[*] Installing %s\n", link)
+			err = exec.Command("git", "clone", fmt.Sprintf("https://%s", link), pluginDir).Run()
+			if err != nil {
+				return nil, errors.New(fmt.Sprintf("failed to install %s: %s", link, err.Error()))
+			}
+		} else if update {
+			fmt.Printf("[*] Updating %s\n", link)
+			err = exec.Command("git", "-C", pluginDir, "pull").Run()
+		}
+		_, err = os.Stat(mainPath)
+		if err != nil {
+			return nil, err
+		}
+		analyzerFiles = append(analyzerFiles, mainPath)
 	}
 	if len(analyzerFiles) > 0 {
 		for _, analyzerFile := range analyzerFiles {
@@ -184,4 +182,14 @@ func newAnalyzers(links []string) (analyzers []gourmet.Analyzer, err error) {
 		}
 	}
 	return analyzers, nil
+}
+
+func dirExists(path string) (bool, error)  {
+	_, err := os.Stat(path); if err == nil {
+		return true, nil
+	}
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	return true, err
 }

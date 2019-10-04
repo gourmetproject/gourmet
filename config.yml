@@ -1,5 +1,11 @@
 interface: eno1
 type: afpacket
 connection_timeout: 10
+update_analyzers: false
 analyzers:
-  - "github.com/gourmetproject/simple_analyzer"
+  github.com/gourmetproject/dnsanalyzer:
+  github.com/gourmetproject/bedtimeanalyzer:
+    threshold: 10
+    bedtime_bot_token: xoxb-775452637478-771755701635-LHa0MRDMJOHDVvqJ5E9ah541
+    my_user_id: UNTDAJT2A
+
