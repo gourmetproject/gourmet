@@ -5,6 +5,8 @@ skip_update: true
 analyzers:
   github.com/gourmetproject/dnsanalyzer:
   github.com/gourmetproject/bedtimeanalyzer:
+    depends_on:
+      - github.com/gourmetproject/dnsanalyzer
     threshold: 10
     bedtime_bot_token: your_token_here
     my_user_id: your_user_id_here
