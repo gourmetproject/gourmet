@@ -6,6 +6,6 @@ analyzers:
   github.com/gourmetproject/dnsanalyzer:
   github.com/gourmetproject/bedtimeanalyzer:
     threshold: 10
-    bedtime_bot_token: xoxb-775452637478-771755701635-LHa0MRDMJOHDVvqJ5E9ah541
-    my_user_id: UNTDAJT2A
+    bedtime_bot_token: token_goes_here
+    my_user_id: uid_goes_here
 
