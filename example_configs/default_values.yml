@@ -1,0 +1,10 @@
+interface: ""
+type: libpcap
+promiscuous: false
+connection_timeout: 0
+snapshot_length: 262144
+bpf: ""
+max_cores: 0
+log_file: gourmet.log
+skip_update: false
+analyzers:

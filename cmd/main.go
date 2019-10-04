@@ -245,3 +245,4 @@ func createAnalyzerNode(name string, config interface{}) (*node, error) {
 		deps: deps,
 	}, nil
 }
+

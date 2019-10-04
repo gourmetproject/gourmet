@@ -1,17 +1,9 @@
-interface:
-type: libpcap
-promiscuous: false
-connection_timeout:
-snapshot_length: 262144
-bpf:
-max_cores:
-log_file: gourmet.log
-skip_update: true
+interface: eth0
+type: afpacket
 analyzers:
   github.com/gourmetproject/dnsanalyzer:
   github.com/gourmetproject/bedtimeanalyzer:
     depends_on:
       - github.com/gourmetproject/dnsanalyzer
-    threshold: 10
     bedtime_bot_token: your_token_here
     my_user_id: your_user_id_here

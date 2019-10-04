@@ -4,22 +4,6 @@ Package gourmet is an extendable network analysis and intrusion detection system
 Gourmet is designed to be fast, simple, and customized. To customize your Gourmet sensor, you can
 implement existing analyzers, or create your own.
 
-The Gourmet Project repository contains analyzers for the following protocols:
-
-  * HTTP (https://github.com/gourmetproject/http_analyzer)
-  * DNS (https://github.com/gourmetprojecct/dns_analyzer)
-
-In order to customize Gourmet, you must customize the project's config.yml file. The default
-contents of the config.yml file are below.
-
-  type: libpcap
-  promiscuous: true
-  interface: eth0
-  snapshot_length: 262144
-  log_file: /log/gourmet.log
-  analyzers:
-    - "github.com/gourmetproject/simple_analyzer"
-
 Usage With No Analyzers
 
 By default, gourmet analyzes Ethernet packets and logs basic information about the connections. This
@@ -31,7 +15,7 @@ connections, the stream is first reassembled and then turned into a Connection o
 
 Usage With Analyzers
 
-If you wish to add an analyzer to Gourmet, you must add the analyzer repo URL to the config.yml
+If you wish to add an analyzer to Gourmet, you must add the analyzer repo URL to your config.yml
 file.
 
 Creating Your Own Analyzer
