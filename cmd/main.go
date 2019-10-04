@@ -44,7 +44,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	analyzers, err := newAnalyzers(c.Analyzers, c.UpdateAnalyzers)
+	analyzers, err := newAnalyzers(c.Analyzers, c.SkipUpdate)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -129,7 +129,8 @@ func convertIfaceType(ifaceType string) (gourmet.InterfaceType, error) {
 	}
 }
 
-func newAnalyzers(links map[string]interface{}, update bool) (analyzers []gourmet.Analyzer, err error) {
+// This function needs some major refactoring. Sorry whoever sees this for now...
+func newAnalyzers(links map[string]interface{}, skipUpdate bool) (analyzers []gourmet.Analyzer, err error) {
 	usr, err := user.Current()
 	if err != nil {
 		return nil, err
@@ -137,6 +138,7 @@ func newAnalyzers(links map[string]interface{}, update bool) (analyzers []gourme
 	homeDir := usr.HomeDir
 	pluginsDir := filepath.Join(homeDir, ".gourmet/plugins/")
 	var analyzerFiles []string
+	gourmet.InitAnalyzerConfigs()
 	for link := range links {
 		pluginDir := filepath.Join(pluginsDir, link)
 		mainPath := filepath.Join(pluginDir, "main.go")
@@ -149,7 +151,7 @@ func newAnalyzers(links map[string]interface{}, update bool) (analyzers []gourme
 			if err != nil {
 				return nil, errors.New(fmt.Sprintf("failed to install %s: %s", link, err.Error()))
 			}
-		} else if update {
+		} else if !skipUpdate {
 			fmt.Printf("[*] Updating %s\n", link)
 			err = exec.Command("git", "-C", pluginDir, "pull").Run()
 		}
@@ -158,6 +160,7 @@ func newAnalyzers(links map[string]interface{}, update bool) (analyzers []gourme
 			return nil, err
 		}
 		analyzerFiles = append(analyzerFiles, mainPath)
+		gourmet.SetAnalyzerConfig(link, links[link])
 	}
 	if len(analyzerFiles) > 0 {
 		for _, analyzerFile := range analyzerFiles {
