@@ -7,14 +7,14 @@ import (
 )
 
 type Config struct {
-	InterfaceType   string `yaml:"type"`
+	InterfaceType   string `json:"type"`
 	Interface       string
 	Promiscuous     bool
-	ConnTimeout     int    `yaml:"connection_timeout"`
-	SnapLen         int    `yaml:"snapshot_length"`
+	ConnTimeout     int    `json:"connection_timeout"`
+	SnapLen         int    `json:"snapshot_length"`
 	Bpf             string
-	LogFile         string `yaml:"log_file"`
-	SkipUpdate      bool   `yaml:"skip_update"`
+	LogFile         string `json:"log_file"`
+	SkipUpdate      bool   `json:"skip_update"`
 	Analyzers       map[string]interface{}
 }
 
