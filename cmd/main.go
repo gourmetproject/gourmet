@@ -176,7 +176,6 @@ func newAnalyzers(links map[string]interface{}, skipUpdate bool) (analyzers []go
 	}
 	if len(analyzerFiles) > 0 {
 		for _, analyzerFile := range analyzerFiles {
-			fmt.Println(analyzerFile)
 			folderName := filepath.Dir(analyzerFile)
 			fmt.Printf("[*] Building %s\n", filepath.Base(filepath.Dir(analyzerFile)))
 			out, err := exec.Command("go", "build", "-buildmode=plugin", "-o",
