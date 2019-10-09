@@ -1,4 +1,4 @@
-interface: wlp2s0
+interface: eth0
 type: libpcap
 analyzers:
   github.com/gourmetproject/dnsanalyzer: {}
