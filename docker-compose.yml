@@ -9,8 +9,10 @@ services:
     command: 
       - -c
       - /etc/gourmet.yml
+      - --log-file
+      - /var/log/gourmet.log
     volumes:
-      - $PWD/log:/log
+      - $PWD/log/gourmet.log:/var/log/gourmet.log
       # This is just an example, you can setup your own config and
       # mount it to /etc/gourmet.yml
-      - $PWD/example_configs/docker.yml:/etc/gourmet.yml
+      - $PWD/example_configs/get_started_config.yml:/etc/gourmet.yml

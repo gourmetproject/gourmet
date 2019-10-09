@@ -1,4 +1,4 @@
-interface: lo
+interface: wlp2s0
 type: libpcap
 analyzers:
   github.com/gourmetproject/dnsanalyzer: {}

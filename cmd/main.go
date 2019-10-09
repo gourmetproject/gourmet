@@ -4,9 +4,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/ghodss/yaml"
-	"github.com/google/gopacket/pcap"
-	"github.com/gourmetproject/gourmet"
 	"io/ioutil"
 	"log"
 	"os"
@@ -15,10 +12,15 @@ import (
 	"path/filepath"
 	"plugin"
 	"runtime"
+
+	"github.com/ghodss/yaml"
+	"github.com/google/gopacket/pcap"
+	"github.com/gourmetproject/gourmet"
 )
 
 var (
-	flagConfig = flag.String("c", "", "Gourmet configuration file")
+	flagConfig    = flag.String("c", "", "Gourmet configuration file")
+	logFile       = flag.String("log-file", "", "file to store snif log")
 	resolvedGraph analyzerGraph
 )
 
@@ -37,9 +39,15 @@ func main() {
 			log.Fatal(err)
 		}
 	}
-	if c.MaxCores != 0 && c.MaxCores < runtime.NumCPU(){
+	if c.MaxCores != 0 && c.MaxCores < runtime.NumCPU() {
 		runtime.GOMAXPROCS(c.MaxCores)
 	}
+
+	// override log file config if explicitly specified
+	if *logFile != "" {
+		c.LogFile = *logFile
+	}
+
 	setDefaults(c)
 	err = validateConfig(c)
 	if err != nil {
@@ -158,7 +166,8 @@ func newAnalyzers(links map[string]interface{}, skipUpdate bool) (analyzers []go
 	for _, analyzer := range resolvedGraph {
 		pluginDir := filepath.Join(pluginsDir, analyzer.name)
 		mainPath := filepath.Join(pluginDir, "main.go")
-		exists, err := dirExists(pluginDir); if err != nil {
+		exists, err := dirExists(pluginDir)
+		if err != nil {
 			return nil, err
 		}
 		if !exists {
@@ -203,8 +212,9 @@ func newAnalyzers(links map[string]interface{}, skipUpdate bool) (analyzers []go
 	return analyzers, nil
 }
 
-func dirExists(path string) (bool, error)  {
-	_, err := os.Stat(path); if err == nil {
+func dirExists(path string) (bool, error) {
+	_, err := os.Stat(path)
+	if err == nil {
 		return true, nil
 	}
 	if os.IsNotExist(err) {
@@ -215,34 +225,37 @@ func dirExists(path string) (bool, error)  {
 
 func createAnalyzerNode(name string, config interface{}) (*node, error) {
 	// check if analyzer has any arguments
-	configMap, ok := config.(map[string]interface{}); if !ok {
+	configMap, ok := config.(map[string]interface{})
+	if !ok {
 		return &node{
 			name: name,
 			deps: nil,
 		}, nil
 	}
 	// check if analyzer has depends_on argument
-	dependencies, ok := configMap["depends_on"]; if !ok {
+	dependencies, ok := configMap["depends_on"]
+	if !ok {
 		return &node{
 			name: name,
 			deps: nil,
 		}, nil
 	}
 	// if depends_on exists, make sure it is a list
-	depList, ok := dependencies.([]interface{}); if !ok {
+	depList, ok := dependencies.([]interface{})
+	if !ok {
 		return nil, errors.New(fmt.Sprintf("depends_on for %s is not a list", name))
 	}
 	var deps []string
 	for _, dep := range depList {
 		// for each element of depends_on, make sure it is a string
-		depString, ok := dep.(string); if !ok {
+		depString, ok := dep.(string)
+		if !ok {
 			return nil, errors.New(fmt.Sprintf("depends_on list value for %s is not a string", name))
 		}
 		deps = append(deps, depString)
 	}
-	return &node {
+	return &node{
 		name: name,
 		deps: deps,
 	}, nil
 }
-
