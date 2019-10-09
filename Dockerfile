@@ -1,12 +1,16 @@
+# Usage
+# docker run -it --rm \
+#  -v $PWD/example_configs/minimal.yml:/etc/gourmet.yml \
+#  gourmet/gourmet -c /etc/gourmet.yml
+
 FROM golang:1.13
 
-RUN apt-get update && apt-get -y libpcap-dev
+WORKDIR /go/github.com/gourmetproject/gourmet
 
-RUN go get -u github.com/gourmetproject/gourmet
-RUN go get gopkg.in/yaml.v2
+RUN apt-get update && apt-get -y install libpcap-dev
 
-COPY config.yml .
+COPY . .
 
-RUN go build /go/src/github.com/gourmetproject/gourmet/cmd/main.go
+RUN GO111MODULE=on make build
 
-ENTRYPOINT ["./main"]
+ENTRYPOINT ["./bin/gourmet"]
