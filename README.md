@@ -31,7 +31,7 @@ Gourmet is not yet finished. But if you would like to give it a test ride, you c
 ```
 git clone https://github.com/gourmetproject/gourmet
 cd gourmet
-docker-compose up
+docker-compose up --build
 ```
 Make sure you change the `interface` argument in `config.yml` to the network interface on your host
 machine that you want capture traffic on. Gourmet will log all captured traffic to `gourmet.log`.

@@ -1,0 +1,5 @@
+interface: lo
+type: libpcap
+analyzers:
+  github.com/gourmetproject/dnsanalyzer: {}
+  github.com/gourmetproject/httpanalyzer: {}
