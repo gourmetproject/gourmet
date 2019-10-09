@@ -1,5 +1,5 @@
-interface: lo
+interface: eth0
 type: libpcap
 analyzers:
-  github.com/gourmetproject/dnsanalyzer: {}
-  github.com/gourmetproject/httpanalyzer: {}
+  github.com/gourmetproject/dnsanalyzer:
+  github.com/gourmetproject/httpanalyzer:

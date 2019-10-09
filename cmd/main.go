@@ -27,9 +27,10 @@ func main() {
 	}
 	if c.MaxCores != 0 && c.MaxCores < runtime.NumCPU() {
 		runtime.GOMAXPROCS(c.MaxCores)
-	} else {
+	} else if c.MaxCores != 0 {
 		fmt.Println(fmt.Errorf("[!] Warning: max_cores argument is invalid. Using %d cores instead", runtime.NumCPU()))
 	}
+
 	setDefaults(c)
 	err = validateConfig(c)
 	if err != nil {

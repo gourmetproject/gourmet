@@ -10,7 +10,6 @@ services:
       - -c
       - /etc/gourmet.yml
     volumes:
-      - $PWD/log:/log
       # This is just an example, you can setup your own config and
       # mount it to /etc/gourmet.yml
-      - $PWD/example_configs/docker.yml:/etc/gourmet.yml
+      - $PWD/example_configs/get_started_config.yml:/etc/gourmet.yml

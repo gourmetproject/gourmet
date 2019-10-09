@@ -15,7 +15,7 @@ endif
 
 build:
 	mkdir -p bin
-	go build -o bin/gourmet cmd/dep_graph.go cmd/main.go
+	go build -o bin/gourmet cmd/main.go
 
 .PHONY: image
 image:
@@ -33,3 +33,4 @@ $(ARCHS):
 	rm gourmet
 
 release: $(ARCHS)
+
