@@ -5,7 +5,6 @@ import (
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/reassembly"
-	"strconv"
 	"sync"
 	"time"
 )
@@ -31,7 +30,7 @@ func newConnectionFromTcp(ts *tcpStream) (c *Connection) {
 		DestinationIP: ts.net.Dst().String(),
 		DestinationPort: dstPort,
 		TransportType: "tcp",
-		Duration: strconv.FormatFloat(ts.duration.Seconds(), 'f', -1, 64),
+		Duration: ts.duration.Seconds(),
 		State: ts.tcpState.String(),
 		Payload: ts.payload,
 		Analyzers: make(map[string]interface{}),
