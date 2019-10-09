@@ -30,11 +30,27 @@ Gourmet
 Gourmet is not yet finished. But if you would like to give it a test ride, you can do the following:
 ```
 git clone https://github.com/gourmetproject/gourmet
-cd gourmet
+cd gourmet && mkdir -p log && touch log/gourmet.log && cp example_config/get_started_config.yml .config.yml
 docker-compose up --build
 ```
-Make sure you change the `interface` argument in `config.yml` to the network interface on your host
-machine that you want capture traffic on. Gourmet will log all captured traffic to `gourmet.log`.
+Make sure you change the `interface` argument in `.config.yml` to the network interface on your host
+machine that you want capture traffic on (to know about config.yml see the Configration section below). Gourmet will log all captured traffic to `gourmet.log`.
+
+Once your container is running, you can just tail the log file to see what gourmet is capturing
+```
+tail -f log/gourmet.log
+```
+
+# Basic configuration (default=config.yml)
+
+You can specify configuration file explicitly by adding option `-c <path/to/config.yml>`. You can see a bunch of example you can get started with in [this section](https://github.com/gourmetproject/gourmet/tree/master/example_configs)
+
+| Flag								| Description
+|---------------------|---------------------------------------------------------------
+| interface						| network interface you want to capture traffic on
+| type								| interface type, supported values are `libpcap`, `afpacket` 
+| analyzers						| list of analyzers you'd like to attach to gourmet instance. see [Analyizers section](#Analyzers) for further details
+| log_file						| Path to log file, can be overided with `--log-file` option 
 
 # Design
 ### Written in Go
