@@ -154,7 +154,10 @@ func convertIfaceType(ifaceType string) (gourmet.InterfaceType, error) {
 }
 
 // This function needs some major refactoring...
-func newAnalyzers(links map[string]interface{}, skipUpdate bool) (analyzers []gourmet.Analyzer, err error) {
+func newAnalyzers(
+	links map[string]interface{},
+	skipUpdate bool,
+) (analyzers []gourmet.Analyzer, err error) {
 	usr, err := user.Current()
 	if err != nil {
 		return nil, err

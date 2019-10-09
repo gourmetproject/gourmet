@@ -13,7 +13,7 @@ type Connection struct {
 	DestinationIP   string
 	DestinationPort int
 	TransportType   string
-	Duration        string        `json:",omitempty"`
+	Duration        float64
 	State          	string        `json:",omitempty"`
 	Payload         *bytes.Buffer `json:"-"`
 	Analyzers       map[string]interface{}
