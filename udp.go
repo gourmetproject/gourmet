@@ -2,10 +2,11 @@ package gourmet
 
 import (
 	"bytes"
+
 	"github.com/google/gopacket"
 )
 
-func processUdpPacket(packet gopacket.Packet, ci gopacket.CaptureInfo) *Connection {
+func processUDPPacket(packet gopacket.Packet, ci gopacket.CaptureInfo) *Connection {
 	srcPort, dstPort := processPorts(packet.TransportLayer().TransportFlow())
 	return &Connection{
 		Timestamp:       ci.Timestamp,

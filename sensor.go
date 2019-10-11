@@ -3,59 +3,32 @@ package gourmet
 import (
 	"errors"
 	"fmt"
-	"github.com/google/gopacket"
-	"github.com/google/gopacket/layers"
 	"log"
 	"time"
+
+	"github.com/google/gopacket"
+	"github.com/google/gopacket/layers"
 )
 
-type InterfaceType byte
+type interfaceType byte
 
 const (
-	// packet capture types
-	AfpacketType InterfaceType = 1
-	LibpcapType  InterfaceType = 3
+	afpacketType interfaceType = 1
+	libpcapType  interfaceType = 3
 )
 
-type SensorMetadata struct {
+type sensorMetadata struct {
 	// The network interface that the sensor is capturing traffic
 	NetworkInterface string
 	// The IP address of the capturing network interface
-	NetworkAddress   []string
+	NetworkAddress []string
 }
 
-func getSensorMetadata(interfaceName string) *SensorMetadata{
-	return &SensorMetadata{
+func getSensorMetadata(interfaceName string) *sensorMetadata {
+	return &sensorMetadata{
 		NetworkInterface: interfaceName,
 		NetworkAddress:   getInterfaceAddresses(interfaceName),
 	}
-}
-
-type SensorOptions struct {
-	InterfaceName string
-	InterfaceType InterfaceType
-	IsPromiscuous bool
-	ConnTimeout   int
-	SnapLen       uint32
-	Bpf           string
-	LogFileName   string
-	Analyzers     []Analyzer
-}
-
-var analyzers []Analyzer
-
-func initOptions(opt *SensorOptions) error {
-	if opt.InterfaceName == "" {
-		return errors.New("interface not set in options")
-	}
-	err := checkIfInterfaceExists(opt.InterfaceName)
-	if err != nil {
-		return err
-	}
-	if opt.SnapLen == 0 {
-		opt.SnapLen = 65536
-	}
-	return nil
 }
 
 type sensor struct {
@@ -64,9 +37,26 @@ type sensor struct {
 	connections   chan *Connection
 }
 
-func Start(options *SensorOptions) {
+// Start is the entry point for Gourmet
+func Start(config *Config) {
 	var err error
-	logger, err = newLogger(options.LogFileName, options.InterfaceName)
+	var workingGraph analyzerGraph
+	for k, v := range config.Analyzers {
+		analyzerNode, err := createAnalyzerNode(k, v)
+		if err != nil {
+			log.Fatal(fmt.Errorf("unable to process analyzer config: %s", err))
+		}
+		workingGraph = append(workingGraph, analyzerNode)
+	}
+	err = resolveGraph(workingGraph)
+	if err != nil {
+		log.Fatal(fmt.Errorf("failed to build dependency graph for analyzers: %s", err))
+	}
+	err = newAnalyzers(config.Analyzers, config.SkipUpdate)
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = initLogger(config.LogFile, config.Interface)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -75,27 +65,40 @@ func Start(options *SensorOptions) {
 		connections: c,
 		streamFactory: &tcpStreamFactory{
 			connections: c,
-			connTimeout: options.ConnTimeout,
+			connTimeout: config.ConnTimeout,
 		},
 	}
-	analyzers = options.Analyzers
-	err = s.getPacketSource(options)
+	err = s.getPacketSource(config)
 	if err != nil {
 		log.Fatal(err)
 	}
 	go s.processConnections()
-	fmt.Printf("\nGourmet is running and logging to %s. Press CTL+C to stop...", logger.fileName)
+	fmt.Printf("\nGourmet is running and logging to %s. Press CTL+C to stop...", gLogger.fileName)
 	s.run()
 }
 
-func (s *sensor) getPacketSource(options *SensorOptions) (err error) {
-	if options.InterfaceType == AfpacketType {
-		s.source, err = newAfpacketSensor(options)
+func convertIfaceType(ifaceType string) (interfaceType, error) {
+	if ifaceType == "libpcap" {
+		return libpcapType, nil
+	} else if ifaceType == "afpacket" {
+		return afpacketType, nil
+	} else {
+		return 0, errors.New("invalid interface type. Must be libpcap or afpacket")
+	}
+}
+
+func (s *sensor) getPacketSource(c *Config) (err error) {
+	ifaceType, err := convertIfaceType(c.InterfaceType)
+	if err != nil {
+		return err
+	}
+	if ifaceType == afpacketType {
+		s.source, err = newAfpacketSensor(c)
 		if err != nil {
 			return err
 		}
-	} else if options.InterfaceType == LibpcapType {
-		s.source, err = newLibpcapSensor(options)
+	} else if ifaceType == libpcapType {
+		s.source, err = newLibpcapSensor(c)
 		if err != nil {
 			return err
 		}
@@ -120,14 +123,14 @@ func (s *sensor) run() {
 }
 
 func (s *sensor) processNewPacket(packet gopacket.Packet, ci gopacket.CaptureInfo) {
-    if packet.TransportLayer() != nil {
-    	layer := packet.TransportLayer()
+	if packet.TransportLayer() != nil {
+		layer := packet.TransportLayer()
 		switch layer.LayerType() {
 		case layers.LayerTypeTCP:
 			s.streamFactory.newPacket(packet.NetworkLayer().NetworkFlow(), packet.TransportLayer().(*layers.TCP))
 			return
 		case layers.LayerTypeUDP:
-			udp := processUdpPacket(packet, ci)
+			udp := processUDPPacket(packet, ci)
 			s.connections <- udp
 			return
 		}
@@ -140,6 +143,6 @@ func (s *sensor) processConnections() {
 		if err != nil {
 			log.Println(err)
 		}
-		logger.Log(*connection)
+		gLogger.log(*connection)
 	}
 }

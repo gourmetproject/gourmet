@@ -2,11 +2,13 @@ package gourmet
 
 import (
 	"errors"
-	"github.com/google/gopacket"
-	"github.com/google/gopacket/pcap"
 	"log"
 	"net"
+	"os"
 	"strconv"
+
+	"github.com/google/gopacket"
+	"github.com/google/gopacket/pcap"
 )
 
 func checkIfInterfaceExists(iface string) error {
@@ -42,4 +44,15 @@ func processPorts(transport gopacket.Flow) (srcPort, dstPort int) {
 	srcPort, _ = strconv.Atoi(transport.Src().String())
 	dstPort, _ = strconv.Atoi(transport.Dst().String())
 	return srcPort, dstPort
+}
+
+func dirExists(path string) (bool, error) {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true, nil
+	}
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	return true, err
 }

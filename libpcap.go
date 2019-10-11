@@ -4,17 +4,13 @@ import (
 	"github.com/google/gopacket/pcap"
 )
 
-func newLibpcapSensor(opt *SensorOptions) (*pcap.Handle, error) {
-	err := initOptions(opt)
-	if err != nil {
-		return nil, err
-	}
+func newLibpcapSensor(c *Config) (*pcap.Handle, error) {
 	var handle *pcap.Handle
-	handle, err = pcap.OpenLive(opt.InterfaceName, int32(opt.SnapLen), opt.IsPromiscuous, pcap.BlockForever)
+	handle, err := pcap.OpenLive(c.Interface, int32(c.SnapLen), c.Promiscuous, pcap.BlockForever)
 	if err != nil {
 		return nil, err
 	}
-	err = handle.SetBPFFilter(opt.Bpf)
+	err = handle.SetBPFFilter(c.Bpf)
 	if err != nil {
 		return nil, err
 	}

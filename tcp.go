@@ -2,11 +2,12 @@ package gourmet
 
 import (
 	"bytes"
+	"sync"
+	"time"
+
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/reassembly"
-	"sync"
-	"time"
 )
 
 type tcpStream struct {
@@ -20,20 +21,20 @@ type tcpStream struct {
 	payloadPackets int
 }
 
-func newConnectionFromTcp(ts *tcpStream) (c *Connection) {
+func newConnectionFromTCP(ts *tcpStream) (c *Connection) {
 	srcPort, dstPort := processPorts(ts.transport)
 	return &Connection{
-		Timestamp: ts.startTime,
-		UID: ts.net.FastHash() + ts.transport.FastHash(),
-		SourceIP: ts.net.Src().String(),
-		SourcePort: srcPort,
-		DestinationIP: ts.net.Dst().String(),
+		Timestamp:       ts.startTime,
+		UID:             ts.net.FastHash() + ts.transport.FastHash(),
+		SourceIP:        ts.net.Src().String(),
+		SourcePort:      srcPort,
+		DestinationIP:   ts.net.Dst().String(),
 		DestinationPort: dstPort,
-		TransportType: "tcp",
-		Duration: ts.duration.Seconds(),
-		State: ts.tcpState.String(),
-		Payload: ts.payload,
-		Analyzers: make(map[string]interface{}),
+		TransportType:   "tcp",
+		Duration:        ts.duration.Seconds(),
+		State:           ts.tcpState.String(),
+		Payload:         ts.payload,
+		Analyzers:       make(map[string]interface{}),
 	}
 }
 
@@ -73,19 +74,19 @@ type tcpStreamFactory struct {
 
 func (tsf *tcpStreamFactory) New(n, t gopacket.Flow, tcp *layers.TCP, ac reassembly.AssemblerContext) reassembly.Stream {
 	ts := &tcpStream{
-		net:          n,
-		transport:    t,
-		payload:      new(bytes.Buffer),
-		startTime:    ac.GetCaptureInfo().Timestamp,
-		tcpState:     reassembly.NewTCPSimpleFSM(reassembly.TCPSimpleFSMOptions{}),
-		done:         make(chan bool),
+		net:       n,
+		transport: t,
+		payload:   new(bytes.Buffer),
+		startTime: ac.GetCaptureInfo().Timestamp,
+		tcpState:  reassembly.NewTCPSimpleFSM(reassembly.TCPSimpleFSMOptions{}),
+		done:      make(chan bool),
 	}
 	go func() {
 		// wait for reassembly to be done
 		<-ts.done
 		// ignore empty streams
 		if ts.packets > 0 {
-			c := newConnectionFromTcp(ts)
+			c := newConnectionFromTCP(ts)
 			tsf.connections <- c
 		}
 	}()
@@ -96,7 +97,7 @@ func (tsf *tcpStreamFactory) newPacket(netFlow gopacket.Flow, tcp *layers.TCP) {
 	select {
 	case <-tsf.ticker.C:
 		tsf.assemblerMutex.Lock()
-		tsf.assembler.FlushCloseOlderThan(time.Now().Add(time.Second * time.Duration(-1 * tsf.connTimeout)))
+		tsf.assembler.FlushCloseOlderThan(time.Now().Add(time.Second * time.Duration(-1*tsf.connTimeout)))
 		tsf.assemblerMutex.Unlock()
 	default:
 		// pass through
