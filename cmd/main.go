@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"flag"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"runtime"
@@ -13,26 +14,21 @@ import (
 )
 
 var (
-	flagConfig = flag.String("c", "", "Gourmet configuration file")
+	flagConfig = flag.String("c", "config.yml", "Gourmet configuration file")
 )
 
 func main() {
 	var c *gourmet.Config
 	var err error
 	flag.Parse()
-	if *flagConfig != "" {
-		c, err = parseConfigFile(*flagConfig)
-		if err != nil {
-			log.Fatal(err)
-		}
-	} else {
-		c, err = parseConfigFile("config.yml")
-		if err != nil {
-			log.Fatal(err)
-		}
+	c, err = parseConfigFile(*flagConfig)
+	if err != nil {
+		log.Fatal(err)
 	}
 	if c.MaxCores != 0 && c.MaxCores < runtime.NumCPU() {
 		runtime.GOMAXPROCS(c.MaxCores)
+	} else {
+		fmt.Println(fmt.Errorf("[!] Warning: max_cores argument is invalid. Using %d cores instead", runtime.NumCPU()))
 	}
 	setDefaults(c)
 	err = validateConfig(c)
