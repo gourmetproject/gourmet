@@ -73,7 +73,8 @@ func Start(config *Config) {
 		log.Fatal(err)
 	}
 	go s.processConnections()
-	fmt.Printf("\nGourmet is running and logging to %s. Press CTL+C to stop...", gLogger.fileName)
+	fmt.Printf("Gourmet is running and logging to %s. Press CTL+C to stop...", gLogger.fileName)
+	fmt.Println()
 	s.run()
 }
 

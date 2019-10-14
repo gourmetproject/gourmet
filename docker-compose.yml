@@ -2,6 +2,15 @@ version: '3'
 services:
   gourmet:
     build: .
+    # see more detail about this option
+    # here https://docs.docker.com/network/network-tutorial-host/
+    # this basically allow to share host network with the running container
     network_mode: "host"
+    command: 
+      - -c
+      - /etc/gourmet.yml
     volumes:
-      - "./:/log"
+      # This is just an example, you can setup your own config and
+      # mount it to /etc/gourmet.yml
+      - $PWD/my_config.yml:/etc/gourmet.yml
+

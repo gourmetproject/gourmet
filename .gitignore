@@ -1,2 +1,5 @@
 .idea/
-.config*
+*.config*
+bin/*
+*.log
+

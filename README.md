@@ -31,10 +31,17 @@ Gourmet is not yet finished. But if you would like to give it a test ride, you c
 ```
 git clone https://github.com/gourmetproject/gourmet
 cd gourmet
-docker-compose up
+cp example_config/get_started_config.yml my_config.yml
+docker-compose up --build
 ```
-Make sure you change the `interface` argument in `config.yml` to the network interface on your host
-machine that you want capture traffic on. Gourmet will log all captured traffic to `gourmet.log`.
+Make sure you change the `interface` argument in `my_config.yml` to the network interface on your host
+machine that you want capture traffic on (to know about config.yml see the Configration section below). Gourmet will log all captured traffic to `gourmet.log`.
+
+Once your container is running, you can just open gourmet.log file to see what gourmet is capturing.
+
+# Basic configuration
+
+You can specify configuration file explicitly by adding option `-c <path/to/config.yml>`. You can see a bunch of example you can get started with in the [example_configs](https://github.com/gourmetproject/gourmet/tree/master/example_configs) folder. Full documentation for the configuration file can be found in the [official documentation](https://docs.gourmetproject.io/gourmet-configuration).
 
 # Design
 ### Written in Go
@@ -49,7 +56,7 @@ One of Go's shining features is [goroutines](https://golangbot.com/goroutines/).
 simply functions that run concurrently with other functions. They are much more lightweight,
 flexible, and easy to work with than standard threads. Goroutines communicate with each other using
 [channels](https://golangbot.com/channels/). Channels make it extremely simple to synchronize
-multithreaded Go programs. 
+multithreaded Go programs.
 
 These two language paradigms dramatically improve the speed, memory efficiency, and simplicity of
 concurrently processing thousands, or even millions, of packets per second.
