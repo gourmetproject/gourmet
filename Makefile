@@ -1,8 +1,8 @@
 prefix = /usr
 bindir := $(prefix)/bin
 
-VERSION := $(shell git describe --tags)
-ARCHS := amd64 386
+VERSION := $(git describe --tags)
+ARCHS := amd64
 arch = $(word 1, $@)
 
 # If the first argument is "run"...
@@ -28,7 +28,7 @@ install:
 .PHONY: $(ARCHS)
 $(ARCHS):
 	mkdir -p release
-	GOARCH=$(arch) GOOS=linux go build -o gourmet cmd/dep_graph.go cmd/main.go
+	GOARCH=$(arch) GOOS=linux go build -o gourmet cmd/main.go
 	zip release/gourmet-$(VERSION)-$(arch).zip gourmet
 	rm gourmet
 
